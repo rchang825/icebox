@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import MyFridge from './pages/MyFridge';
+import Login from './src/pages/Login';
+import Register from './src/pages/Register';
+import MyFridge from './src/pages/MyFridge';
+import GroceryList from './src/pages/GroceryList';
 
 function App() {
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
@@ -24,7 +25,10 @@ function App() {
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           {sessionId && (
-            <button onClick={() => setView('myfridge')}>My Fridge</button>
+            <>
+              <button onClick={() => setView('myfridge')}>My Fridge</button>
+              <button onClick={() => setView('grocery')}>Grocery List</button>
+            </>
           )}
         </div>
         {sessionId ? (
@@ -39,9 +43,10 @@ function App() {
           </div>
         )}
       </nav>
-      {view === 'login' && <Login setSessionId={setSessionId} />}
-      {view === 'register' && <Register setSessionId={setSessionId} />}
-      {view === 'myfridge' && <MyFridge sessionId={sessionId} showAddForm={showAddForm} setShowAddForm={setShowAddForm} />}
+  {view === 'login' && <Login setSessionId={setSessionId} />}
+  {view === 'register' && <Register setSessionId={setSessionId} />}
+  {view === 'myfridge' && <MyFridge sessionId={sessionId} showAddForm={showAddForm} setShowAddForm={setShowAddForm} />}
+  {view === 'grocery' && <GroceryList sessionId={sessionId} />}
     </div>
   );
 }

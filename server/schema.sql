@@ -17,7 +17,19 @@ CREATE TABLE fridge_items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     quantity INTEGER NOT NULL,
+    unit VARCHAR(32) NOT NULL DEFAULT 'unit',
     date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_fridge_items_user_id ON fridge_items(user_id);
+
+-- Grocery Items table
+CREATE TABLE grocery_items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit VARCHAR(32) NOT NULL DEFAULT 'unit',
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);

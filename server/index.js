@@ -63,48 +63,12 @@ function authenticateSession(req, res, next) {
   next();
 }
 
-// Get my fridge items
-app.get('/api/my_fridge_items', authenticateSession, async (req, res) => {
-  const result = await pool.query(
-    'SELECT * FROM fridge_items WHERE user_id = $1 ORDER BY id',
-    [req.user.id]
-  );
-  res.json(result.rows);
-});
 
-// Add fridge item (only self)
-app.post('/api/fridge_items', authenticateSession, async (req, res) => {
-  const { name, quantity } = req.body;
-  const result = await pool.query(
-    'INSERT INTO fridge_items (name, quantity, user_id) VALUES ($1, $2, $3) RETURNING *',
-    [name, quantity, req.user.id]
-  );
-  res.json(result.rows[0]);
-});
-
-// Update fridge item (only self)
-app.put('/api/fridge_items/:id', authenticateSession, async (req, res) => {
-  const { id } = req.params;
-  const { name, quantity } = req.body;
-  // Only allow update if user owns the item
-  const check = await pool.query('SELECT * FROM fridge_items WHERE id = $1 AND user_id = $2', [id, req.user.id]);
-  if (!check.rows.length) return res.sendStatus(403);
-  const result = await pool.query(
-    'UPDATE fridge_items SET name = $1, quantity = $2, date_updated = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
-    [name, quantity, id]
-  );
-  res.json(result.rows[0]);
-});
-
-// Delete fridge item (only self)
-app.delete('/api/fridge_items/:id', authenticateSession, async (req, res) => {
-  const { id } = req.params;
-  // Only allow delete if user owns the item
-  const check = await pool.query('SELECT * FROM fridge_items WHERE id = $1 AND user_id = $2', [id, req.user.id]);
-  if (!check.rows.length) return res.sendStatus(403);
-  await pool.query('DELETE FROM fridge_items WHERE id = $1', [id]);
-  res.json({ success: true });
-});
+// Modularized routes
+const fridgeRoutes = require('./routes/fridge')(authenticateSession);
+const groceryRoutes = require('./routes/grocery')(authenticateSession);
+app.use('/api', fridgeRoutes);
+app.use('/api', groceryRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
