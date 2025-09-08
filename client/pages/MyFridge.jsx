@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-function MyFridge({ sessionId }) {
+function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
   const [items, setItems] = useState([]);
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -33,6 +33,7 @@ function MyFridge({ sessionId }) {
       setName('');
       setQuantity(1);
       fetchItems();
+      setShowAddForm(false);
     } else {
       const data = await res.json();
       setError(data.error || 'Add failed');
@@ -60,14 +61,17 @@ function MyFridge({ sessionId }) {
   };
 
   return (
-    <div>
+    <div id='my-fridge'>
       <h2>My Fridge</h2>
-      <form onSubmit={addItem}>
-        <input type="text" placeholder="Item name" value={name} onChange={e => setName(e.target.value)} required />
-        <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
-        <button type="submit">Add Item</button>
-        {error && <span style={{color:'red'}}>{error}</span>}
-      </form>
+      {showAddForm && (
+        <form onSubmit={addItem} style={{ marginBottom: '2rem' }}>
+          <input type="text" placeholder="Item name" value={name} onChange={e => setName(e.target.value)} required />
+          <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
+          <button type="submit">Add Item</button>
+          <button type="button" onClick={() => setShowAddForm(false)} style={{marginLeft:'1rem'}}>Cancel</button>
+          {error && <span style={{color:'red', marginLeft:'1rem'}}>{error}</span>}
+        </form>
+      )}
       <table border="1">
         <thead>
           <tr>
@@ -95,9 +99,11 @@ function MyFridge({ sessionId }) {
               </td>
               <td>{new Date(item.date_created).toLocaleString()}</td>
               <td>{new Date(item.date_updated).toLocaleString()}</td>
-              <td>
-                <button onClick={() => updateItem(item.id, item.name, item.quantity)}>Update</button>
-                <button onClick={() => deleteItem(item.id)}>Delete</button>
+              <td >
+                <div className='actions'>
+                  <button onClick={() => updateItem(item.id, item.name, item.quantity)}>Update</button>
+                  <button onClick={() => deleteItem(item.id)}>Delete</button>
+                </div>
               </td>
             </tr>
           ))}

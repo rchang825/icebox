@@ -7,6 +7,7 @@ import MyFridge from './pages/MyFridge';
 function App() {
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
   const [view, setView] = useState(sessionId ? 'myfridge' : 'login');
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     if (sessionId) {
@@ -20,23 +21,27 @@ function App() {
 
   return (
     <div>
-      <nav>
-        {sessionId && (
-          <>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          {sessionId && (
             <button onClick={() => setView('myfridge')}>My Fridge</button>
-            <button onClick={() => { setSessionId(null); }}>Logout</button>
-          </>
-        )}
-        {!sessionId && (
-          <>
+          )}
+        </div>
+        {sessionId ? (
+          <div>
+            <button onClick={() => setShowAddForm(f => !f)} title="Add Item">+</button>
+            <button onClick={() => { setSessionId(null); }} style={{ marginLeft: '1rem' }}>Logout</button>
+          </div>
+        ) : (
+          <div>
             <button onClick={() => setView('login')}>Login</button>
             <button onClick={() => setView('register')}>Register</button>
-          </>
+          </div>
         )}
       </nav>
-  {view === 'login' && <Login setSessionId={setSessionId} />}
-  {view === 'register' && <Register setSessionId={setSessionId} />}
-  {view === 'myfridge' && <MyFridge sessionId={sessionId} />}
+      {view === 'login' && <Login setSessionId={setSessionId} />}
+      {view === 'register' && <Register setSessionId={setSessionId} />}
+      {view === 'myfridge' && <MyFridge sessionId={sessionId} showAddForm={showAddForm} setShowAddForm={setShowAddForm} />}
     </div>
   );
 }
