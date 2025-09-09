@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import IngredientDropdown from './IngredientDropdown';
 
 function GroceryItem({ item, checked, handleCheck, sessionId, onItemUpdated }) {
+  // Add delete button handler
   const [edit, setEdit] = useState(false);
   const [alias, setAlias] = useState(item.alias);
   const [category, setCategory] = useState(item.category);
@@ -31,14 +32,14 @@ function GroceryItem({ item, checked, handleCheck, sessionId, onItemUpdated }) {
       }
       ingredient = await createRes.json();
     }
-    // 3. Update grocery item with category only
+    // 3. Update grocery item with category only, include checked
     const res = await fetch(`/api/grocery_items/${item.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({ alias, category: ingredient.name, quantity, unit })
+      body: JSON.stringify({ alias, category: ingredient.name, quantity, unit, checked: item.checked })
     });
     const updated = await res.json();
     setSaving(false);
@@ -47,26 +48,31 @@ function GroceryItem({ item, checked, handleCheck, sessionId, onItemUpdated }) {
   };
 
   return (
-    <li style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+  <li className="grocery-item">
       <input
         type="checkbox"
-        checked={checked}
+        checked={item.checked}
         onChange={() => handleCheck(item.id)}
-        style={{ marginRight: '1rem' }}
+        className="checkbox"
       />
       {edit ? (
         <>
-          <input value={alias} onChange={e => setAlias(e.target.value)} style={{width:'7em', marginRight:'0.5em'}} />
+          <input value={alias} onChange={e => setAlias(e.target.value)} className="input-alias" />
           <IngredientDropdown value={category} onChange={setCategory} sessionId={sessionId} />
-          <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} style={{width:'4em', marginRight:'0.5em'}} />
-          <input value={unit} onChange={e => setUnit(e.target.value)} style={{width:'6em', marginRight:'0.5em'}} />
-          <button onClick={handleSave} disabled={saving} style={{marginRight:'0.5em'}}>Save</button>
+          <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} className="input-qty input-margin" />
+          <input value={unit} onChange={e => setUnit(e.target.value)} className="input-unit input-margin" />
+          <button onClick={handleSave} disabled={saving} className="btn-margin">Save</button>
           <button onClick={() => setEdit(false)} disabled={saving}>Cancel</button>
         </>
       ) : (
-        <span style={{ textDecoration: checked ? 'line-through' : 'none', flex: 1 }}>
-          {item.alias} ({item.category}) x{item.quantity} {item.unit}
-          <button onClick={() => setEdit(true)} style={{marginLeft:'1em'}}>Edit</button>
+        <span className='grocery-item-label flex-space-between'>
+          <div className={item.checked ? 'checked' : ''}>
+            {item.alias} ({item.category}) x{item.quantity} {item.unit}(s)
+          </div>
+          <div className="actions">
+            <button onClick={() => setEdit(true)} className="btn-margin">Edit</button>
+            <button onClick={() => onDelete(item.id)} className="btn-margin btn-delete">Delete</button>
+          </div>
         </span>
       )}
     </li>

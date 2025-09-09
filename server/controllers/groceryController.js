@@ -2,7 +2,7 @@ const pool = require('../db');
 
 exports.getGroceryItems = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM grocery_items ORDER BY id');
+    const result = await pool.query('SELECT * FROM grocery_items WHERE user_id = $1 ORDER BY id', [req.user.id]);
     res.json(result.rows);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -10,14 +10,16 @@ exports.getGroceryItems = async (req, res) => {
 };
 
 exports.addGroceryItem = async (req, res) => {
-  const { alias, category, quantity, unit } = req.body;
+  const { alias, category, quantity, unit, checked } = req.body;
   if (!alias || !category || !quantity || !unit) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+  // Default checked to false if not provided
+  const checkedValue = typeof checked === 'boolean' ? checked : false;
   try {
     const result = await pool.query(
-      'INSERT INTO grocery_items (alias, category, quantity, unit, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [alias, category, quantity, unit, req.user.id]
+      'INSERT INTO grocery_items (alias, category, quantity, unit, checked, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [alias, category, quantity, unit, checkedValue, req.user.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -27,11 +29,11 @@ exports.addGroceryItem = async (req, res) => {
 
 exports.updateGroceryItem = async (req, res) => {
   const { id } = req.params;
-  const { alias, category, quantity, unit } = req.body;
+  const { alias, category, quantity, unit, checked } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE grocery_items SET alias = $1, category = $2, quantity = $3, unit = $4 WHERE id = $5 RETURNING *',
-      [alias, category, quantity, unit, id]
+      'UPDATE grocery_items SET alias = $1, category = $2, quantity = $3, unit = $4, checked = $5 WHERE id = $6 RETURNING *',
+      [alias, category, quantity, unit, checked, id]
     );
     res.json(result.rows[0]);
   } catch (err) {

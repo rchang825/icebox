@@ -26,7 +26,7 @@ function IngredientDropdown({ value, onChange, sessionId }) {
   const filtered = ingredients.filter(ing => ing.name.toLowerCase().includes(input.toLowerCase()));
 
   return (
-    <div style={{ position: 'relative' }}>
+  <div className="dropdown-wrapper">
       <input
         value={input}
         onChange={handleInput}
@@ -36,9 +36,9 @@ function IngredientDropdown({ value, onChange, sessionId }) {
         required
       />
       {showDropdown && filtered.length > 0 && (
-        <ul style={{ position: 'absolute', zIndex: 10, background: '#fff', border: '1px solid #ccc', width: '100%', maxHeight: 120, overflowY: 'auto', margin: 0, padding: 0, listStyle: 'none' }}>
+        <ul className="dropdown-list">
           {filtered.map(ing => (
-            <li key={ing.id} style={{ padding: 6, cursor: 'pointer' }} onMouseDown={() => handleSelect(ing.name)}>
+            <li key={ing.id} className="dropdown-item" onMouseDown={() => handleSelect(ing.name)}>
               {ing.name}
             </li>
           ))}

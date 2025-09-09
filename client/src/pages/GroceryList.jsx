@@ -1,12 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import IngredientDropdown from '../components/IngredientDropdown';
 import FridgePrompt from '../components/FridgePrompt';
+import GroceryPrompt from '../components/GroceryPrompt';
 import GroceryItem from '../components/GroceryItem';
+import { addGroceryItem } from '../utils/groceryUtils';
+import { addFridgeItem } from '../utils/fridgeUtils';
 
-function GroceryList({ sessionId }) {
+function GroceryList({ sessionId, registerAddHandler }) {
   const [items, setItems] = useState([]);
   const [checked, setChecked] = useState({});
   const [fridgePrompt, setFridgePrompt] = useState(null); // {alias, category, quantity, unit}
+  const [groceryPrompt, setGroceryPrompt] = useState(null); // for adding new grocery item
+  const [userName, setUserName] = useState('');
+
+  // Fetch user name on mount
+  useEffect(() => {
+    fetch('/api/me', { headers: { 'x-session-id': sessionId } })
+      .then(res => res.json())
+      .then(data => setUserName(data.name || ''));
+    if (registerAddHandler) {
+      registerAddHandler(() => setGroceryPrompt({ alias: '', category: '', quantity: 1, unit: 'unit' }));
+    }
+    // eslint-disable-next-line
+  }, [registerAddHandler, sessionId]);
+
+  // Delete grocery item and refresh list
+  const handleDelete = async (id) => {
+    await fetch(`/api/grocery_items/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-session-id': sessionId }
+    });
+    // Refresh list
+    fetch('/api/grocery_items', {
+      headers: { 'x-session-id': sessionId }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setItems(data);
+        } else {
+          setItems([]);
+        }
+        setChecked({});
+      });
+  };
 
   useEffect(() => {
     fetch('/api/grocery_items', {
@@ -23,76 +60,88 @@ function GroceryList({ sessionId }) {
       });
   }, [sessionId]);
 
-  const handleCheck = (id) => {
+  const handleCheck = async (id) => {
     const item = items.find(it => it.id === id);
-    if (!checked[id]) {
-      // Only prompt when checking (not unchecking)
-      setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
-    }
-    setChecked(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
-    // 1. Check if ingredient exists
-    const ingRes = await fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } });
-    const ingredients = await ingRes.json();
-    let ingredient = ingredients.find(ing => ing.name.toLowerCase() === category.trim().toLowerCase());
-    if (!ingredient) {
-      // 2. Create ingredient
-      const createRes = await fetch('/api/ingredients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId
-        },
-        body: JSON.stringify({ name: category.trim() })
-      });
-      if (!createRes.ok) {
-        // Optionally handle error
-        return;
-      }
-      ingredient = await createRes.json();
-    }
-    // 3. Add to fridge_items with category only
-    await fetch('/api/fridge_items', {
-      method: 'POST',
+    // Toggle checked in backend
+    const newChecked = !item.checked;
+    // Update backend
+    const res = await fetch(`/api/grocery_items/${id}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({ alias, category: ingredient.name, quantity, unit })
+      body: JSON.stringify({
+        alias: item.alias,
+        category: item.category,
+        quantity: item.quantity,
+        unit: item.unit,
+        checked: newChecked
+      })
     });
-    // Optionally, remove from grocery_items
-    if (fridgePrompt && fridgePrompt.id) {
-      await fetch(`/api/grocery_items/${fridgePrompt.id}`, {
-        method: 'DELETE',
-        headers: { 'x-session-id': sessionId }
-      });
+    if (res.ok) {
+      const updated = await res.json();
+      setItems(prev => prev.map(it => it.id === updated.id ? updated : it));
+      setChecked(prev => ({ ...prev, [id]: newChecked }));
+      if (newChecked && !item.checked) {
+        // Only prompt when checking (not unchecking)
+        setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
+      }
     }
-    setFridgePrompt(null);
-    // Refresh list
-    fetch('/api/grocery_items', {
-      headers: { 'x-session-id': sessionId }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setItems(data);
-        } else {
-          setItems([]);
-        }
-        setChecked({});
-      });
+  };
+
+  const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
+    await addFridgeItem({
+      alias,
+      category,
+      quantity,
+      unit,
+      sessionId,
+      onSuccess: () => setFridgePrompt(null)
+    });
   };
 
   const handleFridgeCancel = () => {
     setFridgePrompt(null);
   };
 
+
   return (
-    <div style={{ maxWidth: 500, margin: '2rem auto', background: '#fff', padding: '2rem', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <h2>Grocery List</h2>
+    <div id='grocery-list'>
+      <h2>{userName ? `${userName}'s Grocery List` : 'Grocery List'}</h2>
       {items.length === 0 && <div>No grocery items yet!</div>}
+      {groceryPrompt && (
+        <GroceryPrompt
+          item={groceryPrompt}
+          sessionId={sessionId}
+          onSave={async ({ alias, category, quantity, unit }) => {
+            await addGroceryItem({
+              alias,
+              category,
+              quantity,
+              unit,
+              sessionId,
+              onSuccess: () => {
+                setGroceryPrompt(null);
+                // Refresh list
+                fetch('/api/grocery_items', {
+                  headers: { 'x-session-id': sessionId }
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (Array.isArray(data)) {
+                      setItems(data);
+                    } else {
+                      setItems([]);
+                    }
+                    setChecked({});
+                  });
+              }
+            });
+          }}
+          onCancel={() => setGroceryPrompt(null)}
+        />
+      )}
       {fridgePrompt && (
         <FridgePrompt
           item={fridgePrompt}
@@ -112,6 +161,7 @@ function GroceryList({ sessionId }) {
               if (!updated || !updated.id) return;
               setItems(prev => prev.map(it => it.id === updated.id ? updated : it));
             }}
+            onDelete={handleDelete}
           />
         ))}
       </ul>

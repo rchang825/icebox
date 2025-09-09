@@ -1,41 +1,81 @@
-import react from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }) {
+  const [edit, setEdit] = useState(false);
+  const [alias, setAlias] = useState(item.alias);
+  const [category, setCategory] = useState(item.category);
+  const [unit, setUnit] = useState(item.unit);
+  // Quantity is always editable, so keep it in sync with parent
+  const [quantity, setQuantity] = useState(item.quantity);
+
+  // Keep quantity in sync with parent updates
+  React.useEffect(() => {
+    setQuantity(item.quantity);
+  }, [item.quantity]);
+
+  const handleSave = () => {
+    setEdit(false);
+    updateItem(item.id, alias, category, quantity, unit);
+  };
+  const handleCancel = () => {
+    setEdit(false);
+    setAlias(item.alias);
+    setCategory(item.category);
+    setUnit(item.unit);
+  };
+
   return (
     <tr key={item.id}>
       <td>
-        <input value={item.alias} onChange={e => {
-          const newAlias = e.target.value;
-          setItems(items.map(it => it.id === item.id ? { ...it, alias: newAlias } : it));
-        }} />
+        {edit ? (
+          <input value={alias} onChange={e => setAlias(e.target.value)} />
+        ) : (
+          <span>{item.alias}</span>
+        )}
       </td>
       <td>
-        <input value={item.category} onChange={e => {
-          const newCategory = e.target.value;
-          setItems(items.map(it => it.id === item.id ? { ...it, category: newCategory } : it));
-        }} />
+        {edit ? (
+          <input value={category} onChange={e => setCategory(e.target.value)} />
+        ) : (
+          <span>{item.category}</span>
+        )}
       </td>
-      <td style={{whiteSpace:'nowrap'}}>
-        <input type="number" min="0" value={item.quantity} onChange={e => {
-          const newQty = Number(e.target.value);
-          if (newQty === 0) {
-            setGroceryPrompt({ id: item.id, alias: item.alias, category: item.category, quantity: 1, unit: item.unit });
-          } else {
-            setItems(items.map(it => it.id === item.id ? { ...it, quantity: newQty } : it));
-          }
-        }} style={{width:'4em'}} />
-        <input type="text" value={item.unit} onChange={e => {
-          const newUnit = e.target.value;
-          setItems(items.map(it => it.id === item.id ? { ...it, unit: newUnit } : it));
-        }} style={{width:'6em', marginLeft:'0.5em'}} />
+  <td className="nowrap">
+        <input
+          type="number"
+          min="0"
+          value={quantity}
+          onChange={e => {
+            const newQty = Number(e.target.value);
+            setQuantity(newQty);
+            if (newQty === 0) {
+              setGroceryPrompt({ id: item.id, alias: alias, category: category, quantity: 1, unit: unit });
+            }
+          }}
+          className="input-qty"
+        />
+        {edit ? (
+          <input type="text" value={unit} onChange={e => setUnit(e.target.value)} className="input-unit" />
+        ) : (
+          <span className="unit-label">{item.unit}(s)</span>
+        )}
       </td>
       <td>{new Date(item.date_created).toLocaleString()}</td>
       <td>{new Date(item.date_updated).toLocaleString()}</td>
-      <td >
+      <td>
         <div className='actions'>
-          <button onClick={() => updateItem(item.id, item.alias, item.category, item.quantity, item.unit)}>Update</button>
-          <button onClick={() => deleteItem(item.id)}>Delete</button>
+          {edit ? (
+            <>
+              <button onClick={handleSave}>Save</button>
+              <button onClick={handleCancel}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setEdit(true)}>Edit</button>
+              <button onClick={() => updateItem(item.id, alias, category, quantity, unit)}>Update</button>
+              <button onClick={() => deleteItem(item.id)} className='btn-delete'>Delete</button>
+            </>
+          )}
         </div>
       </td>
     </tr>

@@ -13,8 +13,8 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
   };
 
   return (
-    <div className="grocery-prompt-modal">
-      <div className="grocery-prompt-content">
+    <div className="prompt-modal">
+      <div className="prompt-content">
         <h3>Add to Grocery List?</h3>
         <form onSubmit={handleSubmit}>
           <label>
@@ -31,10 +31,10 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
           </label>
           <label>
             Unit:
-            <input value={unit} onChange={e => setUnit(e.target.value)} required style={{width:'7em'}} />
+            <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" />
           </label>
-          <button type="submit">Save</button>
-          <button type="button" onClick={onCancel} style={{marginLeft:'1rem'}}>Cancel</button>
+          <button type="submit">Add to Grocery List</button>
+          <button type="button" onClick={onCancel} className="btn-cancel">Don't Add to Grocery List</button>
         </form>
       </div>
     </div>

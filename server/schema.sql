@@ -40,6 +40,7 @@ CREATE TABLE grocery_items (
     category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     unit VARCHAR(32) NOT NULL DEFAULT 'unit',
+    checked BOOLEAN NOT NULL DEFAULT FALSE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);

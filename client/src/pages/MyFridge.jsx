@@ -1,136 +1,100 @@
 import React, { useEffect, useState } from 'react';
 import IngredientDropdown from '../components/IngredientDropdown';
 import GroceryPrompt from '../components/GroceryPrompt';
+import FridgePrompt from '../components/FridgePrompt';
 import FridgeItem from '../components/FridgeItem';
+import { addGroceryItem } from '../utils/groceryUtils';
+import { addFridgeItem } from '../utils/fridgeUtils';
 
-function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
-  const [items, setItems] = useState([]);
+function MyFridge({ sessionId, registerAddHandler }) {
+  const [fridgeItems, setFridgeItems] = useState([]);
   const [groceryPrompt, setGroceryPrompt] = useState(null); // {name, quantity}
-  const [currentItem, setCurrentItem] = useState(null);
   const [alias, setAlias] = useState('');
   const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [unit, setUnit] = useState('unit(s)');
+  const [unit, setUnit] = useState('unit');
   const [error, setError] = useState('');
+  const [userName, setUserName] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const fetchItems = () => {
+  const getFridgeItems = () => {
     fetch('/api/my_fridge_items', {
       headers: { 'x-session-id': sessionId }
     })
       .then(res => res.json())
-      .then(setItems);
+      .then(setFridgeItems);
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    getFridgeItems();
+    fetch('/api/me', { headers: { 'x-session-id': sessionId } })
+      .then(res => res.json())
+      .then(data => setUserName(data.name || ''));
+    if (registerAddHandler) {
+      registerAddHandler(() => setShowAddForm(true));
+    }
+    // eslint-disable-next-line
+  }, [registerAddHandler]);
 
-  const addItem = async (e) => {
-    e.preventDefault();
+  const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
     setError('');
-    let categoryName = category.trim();
-    // 1. Check if ingredient exists
-    const ingRes = await fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } });
-    const ingredients = await ingRes.json();
-    let ingredient = ingredients.find(ing => ing.name.toLowerCase() === categoryName.toLowerCase());
-    if (!ingredient) {
-      // 2. Create ingredient
-      const createRes = await fetch('/api/ingredients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId
-        },
-        body: JSON.stringify({ name: categoryName })
-      });
-      if (!createRes.ok) {
-        const data = await createRes.json();
-        setError(data.error || 'Failed to create ingredient');
-        return;
+    await addFridgeItem({
+      alias,
+      category,
+      quantity,
+      unit,
+      sessionId,
+      onSuccess: () => {
+        setAlias('');
+        setCategory('');
+        setQuantity(1);
+        setUnit('unit');
+        getFridgeItems();
+        setShowAddForm(false);
       }
-      ingredient = await createRes.json();
-    }
-    // 3. Add fridge item
-    const res = await fetch('/api/fridge_items', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-session-id': sessionId
-      },
-      body: JSON.stringify({
-        alias,
-        category: ingredient.name,
-        quantity,
-        unit
-      })
     });
-    if (res.ok) {
-      setAlias('');
-      setCategory('');
-      setQuantity(1);
-      setUnit('unit(s)');
-      fetchItems();
-      setShowAddForm(false);
-    } else {
-      const data = await res.json();
-      setError(data.error || 'Add failed');
-    }
   };
 
-  const updateItem = async (id, name, quantity, unit) => {
-    if (quantity === 0) {
-      setGroceryPrompt({ id, name, quantity: 1, unit });
-      return;
-    }
+  const updateFridgeItem = async (id, alias, category, quantity, unit) => {
     const res = await fetch(`/api/fridge_items/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({ name, quantity, unit })
+      body: JSON.stringify({ alias, category, quantity, unit })
     });
-    if (res.ok) fetchItems();
+    if (res.ok) getFridgeItems();
   };
 
-  const deleteItem = async (id) => {
-    const item = items.find(it => it.id === id);
-    setCurrentItem(item);
-    setGroceryPrompt({ id, name: item.name, quantity: item.quantity, unit: item.unit });
+  const deleteFridgeItem = async (id) => {
+    const item = fridgeItems.find(it => it.id === id);
+    setGroceryPrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
   };
 
   const handleGrocerySave = async ({ alias, category, quantity, unit }) => {
-    // Only add if all required fields are present
     if (!alias || !category || !quantity || !unit) {
       setGroceryPrompt(null);
-      setCurrentItem(null);
       return;
     }
-    // Save to grocery_items
-    const res = await fetch('/api/grocery_items', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-session-id': sessionId
-      },
-      body: JSON.stringify({ alias, category, quantity, unit })
-    });
-    if (res.ok) {
-      // If this was a delete, delete the fridge item
-      if (groceryPrompt && groceryPrompt.id) {
-        await fetch(`/api/fridge_items/${groceryPrompt.id}`, {
-          method: 'DELETE',
-          headers: { 'x-session-id': sessionId }
-        });
+  await addGroceryItem({
+      alias,
+      category,
+      quantity,
+      unit,
+      sessionId,
+      onSuccess: async () => {
+        // If this was a delete, delete the fridge item
+        if (groceryPrompt && groceryPrompt.id) {
+          await fetch(`/api/fridge_items/${groceryPrompt.id}`, {
+            method: 'DELETE',
+            headers: { 'x-session-id': sessionId }
+          });
+        }
+        setGroceryPrompt(null);
+        getFridgeItems();
       }
-      setGroceryPrompt(null);
-      setCurrentItem(null);
-      fetchItems();
-    } else {
-      // Optionally handle error
-      setGroceryPrompt(null);
-      setCurrentItem(null);
-    }
+    });
   };
 
   const handleGroceryCancel = async () => {
@@ -142,31 +106,28 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
       });
     }
     setGroceryPrompt(null);
-    setCurrentItem(null);
-    fetchItems();
+    getFridgeItems();
   };
 
   return (
     <div id='my-fridge'>
-      <h2>My Fridge</h2>
+      <h2>{userName ? `${userName}'s Fridge` : 'My Fridge'}</h2>
       {showAddForm && (
-        <form onSubmit={addItem} style={{ marginBottom: '2rem' }}>
-          <input type="text" placeholder="Name" value={alias} onChange={e => setAlias(e.target.value)} required />
-          <IngredientDropdown value={category} onChange={setCategory} sessionId={sessionId} />
-          <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
-          <input type="text" placeholder="Unit" value={unit} onChange={e => setUnit(e.target.value)} required style={{width:'7em'}} />
-          <button type="submit">Add Item</button>
-          <button type="button" onClick={() => setShowAddForm(false)} style={{marginLeft:'1rem'}}>Cancel</button>
-          {error && <span style={{color:'red', marginLeft:'1rem'}}>{error}</span>}
-        </form>
+        <FridgePrompt
+          item={{ alias, category, quantity, unit }}
+          sessionId={sessionId}
+          onSave={handleFridgeSave}
+          onCancel={() => setShowAddForm(false)}
+        />
       )}
       {groceryPrompt && (
         <GroceryPrompt
-          item={currentItem || groceryPrompt}
+          item={groceryPrompt}
           onSave={handleGrocerySave}
           onCancel={handleGroceryCancel}
         />
       )}
+      {fridgeItems.length === 0 && <div>No fridge items yet!</div>}
       <table border="1">
         <thead>
           <tr>
@@ -179,15 +140,15 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
           </tr>
         </thead>
         <tbody>
-          {items.map(item => (
+          {fridgeItems.map(item => (
             <FridgeItem
               key={item.id}
               item={item}
-              setItems={setItems}
-              updateItem={updateItem}
-              deleteItem={deleteItem}
+              setItems={setFridgeItems}
+              updateItem={updateFridgeItem}
+              deleteItem={deleteFridgeItem}
               setGroceryPrompt={setGroceryPrompt}
-              items={items}
+              items={fridgeItems}
             />
           ))}
         </tbody>

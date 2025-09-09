@@ -13,10 +13,10 @@ function FridgePrompt({ item, onSave, onCancel, sessionId }) {
   };
 
   return (
-    <div className="grocery-prompt-modal">
-      <div className="grocery-prompt-content">
+    <div className="prompt-modal">
+      <div className="prompt-content">
         <h3>Add to Fridge?</h3>
-        <form onSubmit={handleSubmit}>
+  <form onSubmit={handleSubmit}>
           <label>
             Name:
             <input value={alias} onChange={e => setAlias(e.target.value)} required />
@@ -31,10 +31,10 @@ function FridgePrompt({ item, onSave, onCancel, sessionId }) {
           </label>
           <label>
             Unit:
-            <input value={unit} onChange={e => setUnit(e.target.value)} required style={{width:'7em'}} />
+            <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" />
           </label>
-          <button type="submit">Save</button>
-          <button type="button" onClick={onCancel} style={{marginLeft:'1rem'}}>Cancel</button>
+          <button type="submit">Add to Fridge</button>
+          <button type="button" onClick={onCancel} className="btn-cancel">Don't Add to Fridge</button>
         </form>
       </div>
     </div>

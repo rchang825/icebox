@@ -1,14 +1,14 @@
 const ingredientRoutes = require('./routes/ingredient')(authenticateSession);
+const fridgeRoutes = require('./routes/fridge')(authenticateSession);
+const groceryRoutes = require('./routes/grocery')(authenticateSession);
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
-
 const pool = require('./db');
-
-
 const path = require('path');
 const app = express();
+
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -54,8 +54,6 @@ app.post('/api/login', async (req, res) => {
   res.json({ sessionId });
 });
 
-
-
 // Middleware to authenticate session
 function authenticateSession(req, res, next) {
   const sessionId = req.headers['x-session-id'];
@@ -64,10 +62,12 @@ function authenticateSession(req, res, next) {
   next();
 }
 
+// Return current user info
+app.get('/api/me', authenticateSession, (req, res) => {
+  res.json({ name: req.user.name, email: req.user.email, id: req.user.id });
+});
 
 // Modularized routes
-const fridgeRoutes = require('./routes/fridge')(authenticateSession);
-const groceryRoutes = require('./routes/grocery')(authenticateSession);
 app.use('/api', fridgeRoutes);
 app.use('/api', groceryRoutes);
 app.use('/api', ingredientRoutes);
