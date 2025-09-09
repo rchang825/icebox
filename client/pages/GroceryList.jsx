@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import IngredientDropdown from '../components/IngredientDropdown';
 import FridgePrompt from '../components/FridgePrompt';
 import GroceryItem from '../components/GroceryItem';
 
@@ -33,34 +32,14 @@ function GroceryList({ sessionId }) {
   };
 
   const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
-    // 1. Check if ingredient exists
-    const ingRes = await fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } });
-    const ingredients = await ingRes.json();
-    let ingredient = ingredients.find(ing => ing.name.toLowerCase() === category.trim().toLowerCase());
-    if (!ingredient) {
-      // 2. Create ingredient
-      const createRes = await fetch('/api/ingredients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId
-        },
-        body: JSON.stringify({ name: category.trim() })
-      });
-      if (!createRes.ok) {
-        // Optionally handle error
-        return;
-      }
-      ingredient = await createRes.json();
-    }
-    // 3. Add to fridge_items with category only
+    // Add to fridge_items
     await fetch('/api/fridge_items', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({ alias, category: ingredient.name, quantity, unit })
+      body: JSON.stringify({ alias, category, quantity, unit })
     });
     // Optionally, remove from grocery_items
     if (fridgePrompt && fridgePrompt.id) {
@@ -98,6 +77,7 @@ function GroceryList({ sessionId }) {
           item={fridgePrompt}
           onSave={handleFridgeSave}
           onCancel={handleFridgeCancel}
+          sessionId={sessionId}
         />
       )}
       <ul style={{ listStyle: 'none', padding: 0 }}>

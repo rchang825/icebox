@@ -2,20 +2,25 @@ import react from 'react';
 import { useState } from 'react';
 
 function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }) {
-
   return (
     <tr key={item.id}>
       <td>
-        <input value={item.name} onChange={e => {
-          const newName = e.target.value;
-          setItems(items.map(it => it.id === item.id ? { ...it, name: newName } : it));
+        <input value={item.alias} onChange={e => {
+          const newAlias = e.target.value;
+          setItems(items.map(it => it.id === item.id ? { ...it, alias: newAlias } : it));
+        }} />
+      </td>
+      <td>
+        <input value={item.category} onChange={e => {
+          const newCategory = e.target.value;
+          setItems(items.map(it => it.id === item.id ? { ...it, category: newCategory } : it));
         }} />
       </td>
       <td style={{whiteSpace:'nowrap'}}>
         <input type="number" min="0" value={item.quantity} onChange={e => {
           const newQty = Number(e.target.value);
           if (newQty === 0) {
-            setGroceryPrompt({ id: item.id, name: item.name, quantity: 1, unit: item.unit });
+            setGroceryPrompt({ id: item.id, alias: item.alias, category: item.category, quantity: 1, unit: item.unit });
           } else {
             setItems(items.map(it => it.id === item.id ? { ...it, quantity: newQty } : it));
           }
@@ -29,7 +34,7 @@ function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }
       <td>{new Date(item.date_updated).toLocaleString()}</td>
       <td >
         <div className='actions'>
-          <button onClick={() => updateItem(item.id, item.name, item.quantity, item.unit)}>Update</button>
+          <button onClick={() => updateItem(item.id, item.alias, item.category, item.quantity, item.unit)}>Update</button>
           <button onClick={() => deleteItem(item.id)}>Delete</button>
         </div>
       </td>

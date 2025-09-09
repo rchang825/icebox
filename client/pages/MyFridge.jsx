@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import IngredientDropdown from '../components/IngredientDropdown';
 import GroceryPrompt from '../components/GroceryPrompt';
 import FridgeItem from '../components/FridgeItem';
 
 function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
   const [items, setItems] = useState([]);
   const [groceryPrompt, setGroceryPrompt] = useState(null); // {name, quantity}
-  const [currentItem, setCurrentItem] = useState(null);
   const [alias, setAlias] = useState('');
   const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -28,41 +26,13 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
   const addItem = async (e) => {
     e.preventDefault();
     setError('');
-    let categoryName = category.trim();
-    // 1. Check if ingredient exists
-    const ingRes = await fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } });
-    const ingredients = await ingRes.json();
-    let ingredient = ingredients.find(ing => ing.name.toLowerCase() === categoryName.toLowerCase());
-    if (!ingredient) {
-      // 2. Create ingredient
-      const createRes = await fetch('/api/ingredients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-id': sessionId
-        },
-        body: JSON.stringify({ name: categoryName })
-      });
-      if (!createRes.ok) {
-        const data = await createRes.json();
-        setError(data.error || 'Failed to create ingredient');
-        return;
-      }
-      ingredient = await createRes.json();
-    }
-    // 3. Add fridge item
     const res = await fetch('/api/fridge_items', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({
-        alias,
-        category: ingredient.name,
-        quantity,
-        unit
-      })
+      body: JSON.stringify({ alias, category, quantity, unit })
     });
     if (res.ok) {
       setAlias('');
@@ -77,9 +47,9 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
     }
   };
 
-  const updateItem = async (id, name, quantity, unit) => {
+  const updateItem = async (id, alias, category, quantity, unit) => {
     if (quantity === 0) {
-      setGroceryPrompt({ id, name, quantity: 1, unit });
+      setGroceryPrompt({ id, alias, category, quantity: 1, unit });
       return;
     }
     const res = await fetch(`/api/fridge_items/${id}`, {
@@ -88,26 +58,19 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
         'Content-Type': 'application/json',
         'x-session-id': sessionId
       },
-      body: JSON.stringify({ name, quantity, unit })
+      body: JSON.stringify({ alias, category, quantity, unit })
     });
     if (res.ok) fetchItems();
   };
 
   const deleteItem = async (id) => {
     const item = items.find(it => it.id === id);
-    setCurrentItem(item);
-    setGroceryPrompt({ id, name: item.name, quantity: item.quantity, unit: item.unit });
+    setGroceryPrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
   };
 
   const handleGrocerySave = async ({ alias, category, quantity, unit }) => {
-    // Only add if all required fields are present
-    if (!alias || !category || !quantity || !unit) {
-      setGroceryPrompt(null);
-      setCurrentItem(null);
-      return;
-    }
     // Save to grocery_items
-    const res = await fetch('/api/grocery_items', {
+    await fetch('/api/grocery_items', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,22 +78,18 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
       },
       body: JSON.stringify({ alias, category, quantity, unit })
     });
-    if (res.ok) {
-      // If this was a delete, delete the fridge item
-      if (groceryPrompt && groceryPrompt.id) {
-        await fetch(`/api/fridge_items/${groceryPrompt.id}`, {
-          method: 'DELETE',
-          headers: { 'x-session-id': sessionId }
-        });
-      }
-      setGroceryPrompt(null);
-      setCurrentItem(null);
-      fetchItems();
-    } else {
-      // Optionally handle error
-      setGroceryPrompt(null);
-      setCurrentItem(null);
+    // If this was a delete, delete the fridge item
+    if (groceryPrompt && groceryPrompt.id) {
+      await fetch(`/api/fridge_items/${groceryPrompt.id}`, {
+        method: 'DELETE',
+        headers: { 'x-session-id': sessionId }
+      });
+    } else if (groceryPrompt && groceryPrompt.id === undefined) {
+      // If this was a quantity 0 update, set fridge item quantity to 0
+      // (already handled by not updating, or you can remove the item)
     }
+    setGroceryPrompt(null);
+    fetchItems();
   };
 
   const handleGroceryCancel = async () => {
@@ -142,7 +101,6 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
       });
     }
     setGroceryPrompt(null);
-    setCurrentItem(null);
     fetchItems();
   };
 
@@ -151,8 +109,8 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
       <h2>My Fridge</h2>
       {showAddForm && (
         <form onSubmit={addItem} style={{ marginBottom: '2rem' }}>
-          <input type="text" placeholder="Name" value={alias} onChange={e => setAlias(e.target.value)} required />
-          <IngredientDropdown value={category} onChange={setCategory} sessionId={sessionId} />
+          <input type="text" placeholder="Name (alias)" value={alias} onChange={e => setAlias(e.target.value)} required />
+          <input type="text" placeholder="Category (ingredient)" value={category} onChange={e => setCategory(e.target.value)} required />
           <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
           <input type="text" placeholder="Unit" value={unit} onChange={e => setUnit(e.target.value)} required style={{width:'7em'}} />
           <button type="submit">Add Item</button>
@@ -162,16 +120,16 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
       )}
       {groceryPrompt && (
         <GroceryPrompt
-          item={currentItem || groceryPrompt}
+          item={groceryPrompt}
           onSave={handleGrocerySave}
           onCancel={handleGroceryCancel}
+          sessionId={sessionId}
         />
       )}
       <table border="1">
         <thead>
           <tr>
             <th>Name</th>
-            <th>Category</th>
             <th>Quantity</th>
             <th>Date Created</th>
             <th>Date Updated</th>
@@ -187,7 +145,6 @@ function MyFridge({ sessionId, showAddForm, setShowAddForm }) {
               updateItem={updateItem}
               deleteItem={deleteItem}
               setGroceryPrompt={setGroceryPrompt}
-              items={items}
             />
           ))}
         </tbody>

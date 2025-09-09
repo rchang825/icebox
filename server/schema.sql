@@ -12,10 +12,19 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- Ingredients table
+CREATE TABLE ingredients (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
+);
+CREATE INDEX idx_ingredients_name ON ingredients(name);
+
 -- Fridge Items table
 CREATE TABLE fridge_items (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    alias VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     unit VARCHAR(32) NOT NULL DEFAULT 'unit',
     date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -27,7 +36,8 @@ CREATE INDEX idx_fridge_items_user_id ON fridge_items(user_id);
 -- Grocery Items table
 CREATE TABLE grocery_items (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    alias VARCHAR(100) UNIQUE NOT NULL,
+    category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     unit VARCHAR(32) NOT NULL DEFAULT 'unit',
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE

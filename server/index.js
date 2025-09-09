@@ -1,3 +1,4 @@
+const ingredientRoutes = require('./routes/ingredient')(authenticateSession);
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -69,6 +70,7 @@ const fridgeRoutes = require('./routes/fridge')(authenticateSession);
 const groceryRoutes = require('./routes/grocery')(authenticateSession);
 app.use('/api', fridgeRoutes);
 app.use('/api', groceryRoutes);
+app.use('/api', ingredientRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

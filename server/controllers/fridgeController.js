@@ -9,24 +9,35 @@ exports.getMyFridgeItems = async (req, res) => {
 };
 
 exports.addFridgeItem = async (req, res) => {
-  const { name, quantity, unit } = req.body;
-  const result = await pool.query(
-    'INSERT INTO fridge_items (name, quantity, unit, user_id) VALUES ($1, $2, $3, $4) RETURNING *',
-    [name, quantity, unit || 'unit(s)', req.user.id]
-  );
-  res.json(result.rows[0]);
+  const { alias, category, quantity, unit } = req.body;
+  if (!alias || !category || !quantity || !unit) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const result = await pool.query(
+      'INSERT INTO fridge_items (alias, category, quantity, unit, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [alias, category, quantity, unit, req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 exports.updateFridgeItem = async (req, res) => {
   const { id } = req.params;
-  const { name, quantity, unit } = req.body;
+  const { alias, category, quantity, unit } = req.body;
   const check = await pool.query('SELECT * FROM fridge_items WHERE id = $1 AND user_id = $2', [id, req.user.id]);
   if (!check.rows.length) return res.sendStatus(403);
-  const result = await pool.query(
-    'UPDATE fridge_items SET name = $1, quantity = $2, unit = $3, date_updated = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *',
-    [name, quantity, unit, id]
-  );
-  res.json(result.rows[0]);
+  try {
+    const result = await pool.query(
+      'UPDATE fridge_items SET alias = $1, category = $2, quantity = $3, unit = $4, date_updated = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
+      [alias, category, quantity, unit, id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 exports.deleteFridgeItem = async (req, res) => {

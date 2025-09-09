@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import IngredientDropdown from './IngredientDropdown';
 
-function FridgePrompt({ item, onSave, onCancel }) {
-  const [name, setName] = useState(item.name);
+function FridgePrompt({ item, onSave, onCancel, sessionId }) {
+  const [alias, setAlias] = useState(item.alias || '');
+  const [category, setCategory] = useState(item.category || '');
   const [quantity, setQuantity] = useState(item.quantity || 1);
   const [unit, setUnit] = useState(item.unit || 'unit');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ name, quantity, unit });
+    onSave({ alias, category, quantity, unit });
   };
 
   return (
@@ -17,7 +19,11 @@ function FridgePrompt({ item, onSave, onCancel }) {
         <form onSubmit={handleSubmit}>
           <label>
             Name:
-            <input value={name} onChange={e => setName(e.target.value)} required />
+            <input value={alias} onChange={e => setAlias(e.target.value)} required />
+          </label>
+          <label>
+            Category:
+            <IngredientDropdown value={category} onChange={setCategory} sessionId={sessionId} />
           </label>
           <label>
             Quantity:

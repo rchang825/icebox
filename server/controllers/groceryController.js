@@ -10,11 +10,14 @@ exports.getGroceryItems = async (req, res) => {
 };
 
 exports.addGroceryItem = async (req, res) => {
-  const { name, quantity, unit } = req.body;
+  const { alias, category, quantity, unit } = req.body;
+  if (!alias || !category || !quantity || !unit) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
   try {
     const result = await pool.query(
-      'INSERT INTO grocery_items (name, quantity, unit) VALUES ($1, $2, $3) RETURNING *',
-      [name, quantity, unit]
+      'INSERT INTO grocery_items (alias, category, quantity, unit, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [alias, category, quantity, unit, req.user.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -24,11 +27,11 @@ exports.addGroceryItem = async (req, res) => {
 
 exports.updateGroceryItem = async (req, res) => {
   const { id } = req.params;
-  const { name, quantity, unit } = req.body;
+  const { alias, category, quantity, unit } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE grocery_items SET name = $1, quantity = $2, unit = $3 WHERE id = $4 RETURNING *',
-      [name, quantity, unit, id]
+      'UPDATE grocery_items SET alias = $1, category = $2, quantity = $3, unit = $4 WHERE id = $5 RETURNING *',
+      [alias, category, quantity, unit, id]
     );
     res.json(result.rows[0]);
   } catch (err) {
