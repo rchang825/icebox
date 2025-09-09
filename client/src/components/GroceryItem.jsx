@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import IngredientDropdown from './IngredientDropdown';
 
-function GroceryItem({ item, checked, handleCheck, sessionId, onItemUpdated }) {
+function GroceryItem({ item, checked, handleCheck, sessionId, onItemUpdated, onDelete }) {
   // Add delete button handler
   const [edit, setEdit] = useState(false);
   const [alias, setAlias] = useState(item.alias);
