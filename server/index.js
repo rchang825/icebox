@@ -1,6 +1,7 @@
 const ingredientRoutes = require('./routes/ingredient')(authenticateSession);
 const fridgeRoutes = require('./routes/fridge')(authenticateSession);
 const groceryRoutes = require('./routes/grocery')(authenticateSession);
+const mealRoutes = require('./routes/meal')(authenticateSession);
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -40,6 +41,14 @@ app.post('/api/register', async (req, res) => {
 const sessions = {};
 const crypto = require('crypto');
 
+// Middleware to authenticate session
+function authenticateSession(req, res, next) {
+  const sessionId = req.headers['x-session-id'];
+  if (!sessionId || !sessions[sessionId]) return res.sendStatus(401);
+  req.user = sessions[sessionId];
+  next();
+}
+
 // User login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -54,14 +63,6 @@ app.post('/api/login', async (req, res) => {
   res.json({ sessionId });
 });
 
-// Middleware to authenticate session
-function authenticateSession(req, res, next) {
-  const sessionId = req.headers['x-session-id'];
-  if (!sessionId || !sessions[sessionId]) return res.sendStatus(401);
-  req.user = sessions[sessionId];
-  next();
-}
-
 // Return current user info
 app.get('/api/me', authenticateSession, (req, res) => {
   res.json({ name: req.user.name, email: req.user.email, id: req.user.id });
@@ -71,6 +72,7 @@ app.get('/api/me', authenticateSession, (req, res) => {
 app.use('/api', fridgeRoutes);
 app.use('/api', groceryRoutes);
 app.use('/api', ingredientRoutes);
+app.use('/api', mealRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -26,9 +26,9 @@ function FridgePrompt({ item, onSave, onCancel, sessionId, error }) {
             Name:
             <input value={alias} onChange={e => setAlias(e.target.value)} required />
           </label>
-          <label>
+          <label style={{ display: 'flex' }}>
             Category:
-            <IngredientDropdown value={category} onChange={setCategory} sessionId={sessionId} />
+            <IngredientDropdown required value={category} onChange={setCategory} sessionId={sessionId} />
           </label>
           <label>
             Quantity:

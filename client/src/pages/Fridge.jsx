@@ -101,7 +101,6 @@ function Fridge({ sessionId, registerAddHandler }) {
       setGroceryPrompt(null);
       return;
     }
-    // Use new API to check for duplicate alias
     const res = await fetch(`/api/grocery_items/alias/${encodeURIComponent(alias)}`, {
       headers: { 'x-session-id': sessionId }
     });

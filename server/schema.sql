@@ -48,7 +48,8 @@ CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);
 CREATE TABLE meals (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  time interval HOUR TO MINUTE,
+  time VARCHAR(32) NOT NULL,
+  servings INTEGER DEFAULT 1,
   instructions TEXT[] NOT NULL,
   user_id INTEGER
 );
@@ -58,9 +59,10 @@ CREATE INDEX idx_meals_user_id ON meals(user_id);
 CREATE TABLE meal_ingredients (
   id SERIAL PRIMARY KEY,
   meal_id INTEGER REFERENCES meals(id) ON DELETE CASCADE,
-  ingredient_name VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE CASCADE,
+  category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE CASCADE,
+  alias VARCHAR(100) NOT NULL,
   quantity INTEGER NOT NULL,
   unit VARCHAR(32) NOT NULL DEFAULT 'unit'
 );
 CREATE INDEX idx_meal_ingredients_meal_id ON meal_ingredients(meal_id);
-CREATE INDEX idx_meal_ingredients_ingredient_name ON meal_ingredients(ingredient_name);
+CREATE INDEX idx_meal_ingredients_category ON meal_ingredients(category);

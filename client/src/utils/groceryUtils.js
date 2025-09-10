@@ -31,19 +31,5 @@ export async function addGroceryItem({ alias, category, quantity, unit, sessionI
   });
   if (res.ok && onSuccess) {
     onSuccess();
-    return;
-  }
-  // If duplicate error, try to fetch the existing item and call onDuplicate
-  if (res.status === 400 || res.status === 409) {
-    // Try to fetch the existing grocery item by alias
-    const getRes = await fetch(`/api/grocery_items?alias=${encodeURIComponent(alias)}`, {
-      headers: { 'x-session-id': sessionId }
-    });
-    if (getRes.ok) {
-      const item = await getRes.json()[0];
-      if (item && onDuplicate) {
-        onDuplicate(item);
-      }
-    }
   }
 }

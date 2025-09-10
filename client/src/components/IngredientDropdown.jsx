@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
+
 function IngredientDropdown({ value, onChange, sessionId }) {
   const [ingredients, setIngredients] = useState([]);
   const [input, setInput] = useState(value || '');
   const [showDropdown, setShowDropdown] = useState(false);
 
+  React.useEffect(() => {
+    setInput(value || '');
+  }, [value]);
+
   useEffect(() => {
-    fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } })
+    fetch('/api/ingredients')
       .then(res => res.json())
       .then(setIngredients);
-  }, [sessionId]);
+  }, []);
 
   const handleSelect = (name) => {
     setInput(name);
@@ -32,8 +37,7 @@ function IngredientDropdown({ value, onChange, sessionId }) {
         onChange={handleInput}
         onFocus={() => setShowDropdown(true)}
         onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-        placeholder="Category (ingredient)"
-        required
+        placeholder="Category"
       />
       {showDropdown && filtered.length > 0 && (
         <ul className="dropdown-list">

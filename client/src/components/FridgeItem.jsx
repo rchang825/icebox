@@ -72,8 +72,8 @@ function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }
           ) : (
             <>
               <button onClick={() => setEdit(true)}>Edit</button>
-              <button onClick={() => updateItem(item.id, alias, category, quantity, unit)}>Update</button>
-              <button onClick={() => deleteItem(item.id)} className='btn-delete'>Delete</button>
+              <button onClick={() => updateItem(item.id, alias, category, quantity, unit)}>Save</button>
+              <button onClick={() => deleteItem(item.id)} className='btn-delete'>Finish</button>
             </>
           )}
         </div>
