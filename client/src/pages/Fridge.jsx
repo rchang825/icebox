@@ -6,9 +6,9 @@ import FridgeItem from '../components/FridgeItem';
 import { addGroceryItem } from '../utils/groceryUtils';
 import { addFridgeItem } from '../utils/fridgeUtils';
 
-function MyFridge({ sessionId, registerAddHandler }) {
+function Fridge({ sessionId, registerAddHandler }) {
   const [fridgeItems, setFridgeItems] = useState([]);
-  const [groceryPrompt, setGroceryPrompt] = useState(null); // {name, quantity}
+  const [groceryPrompt, setGroceryPrompt] = useState(null);
   const [alias, setAlias] = useState('');
   const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -18,7 +18,7 @@ function MyFridge({ sessionId, registerAddHandler }) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const getFridgeItems = () => {
-    fetch('/api/my_fridge_items', {
+    fetch('/api/fridge_items', {
       headers: { 'x-session-id': sessionId }
     })
       .then(res => res.json())
@@ -33,7 +33,6 @@ function MyFridge({ sessionId, registerAddHandler }) {
     if (registerAddHandler) {
       registerAddHandler(() => setShowAddForm(true));
     }
-    // eslint-disable-next-line
   }, [registerAddHandler]);
 
   const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
@@ -157,4 +156,4 @@ function MyFridge({ sessionId, registerAddHandler }) {
   );
 }
 
-export default MyFridge;
+export default Fridge;

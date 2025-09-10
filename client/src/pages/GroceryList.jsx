@@ -9,8 +9,8 @@ import { addFridgeItem } from '../utils/fridgeUtils';
 function GroceryList({ sessionId, registerAddHandler }) {
   const [items, setItems] = useState([]);
   const [checked, setChecked] = useState({});
-  const [fridgePrompt, setFridgePrompt] = useState(null); // {alias, category, quantity, unit}
-  const [groceryPrompt, setGroceryPrompt] = useState(null); // for adding new grocery item
+  const [fridgePrompt, setFridgePrompt] = useState(null);
+  const [groceryPrompt, setGroceryPrompt] = useState(null);
   const [userName, setUserName] = useState('');
 
   // Fetch user name on mount
@@ -21,7 +21,6 @@ function GroceryList({ sessionId, registerAddHandler }) {
     if (registerAddHandler) {
       registerAddHandler(() => setGroceryPrompt({ alias: '', category: '', quantity: 1, unit: 'unit' }));
     }
-    // eslint-disable-next-line
   }, [registerAddHandler, sessionId]);
 
   // Delete grocery item and refresh list

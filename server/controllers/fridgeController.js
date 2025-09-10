@@ -1,6 +1,6 @@
 const pool = require('../db');
 
-exports.getMyFridgeItems = async (req, res) => {
+exports.getFridgeItems = async (req, res) => {
   const result = await pool.query(
     'SELECT * FROM fridge_items WHERE user_id = $1 ORDER BY id',
     [req.user.id]

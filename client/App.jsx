@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './src/pages/Login';
 import Register from './src/pages/Register';
-import MyFridge from './src/pages/MyFridge';
+import Fridge from './src/pages/Fridge';
 import GroceryList from './src/pages/GroceryList';
 import FridgePrompt from './src/components/FridgePrompt';
 import GroceryPrompt from './src/components/GroceryPrompt';
@@ -10,22 +10,19 @@ import GroceryPrompt from './src/components/GroceryPrompt';
 
 function App() {
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
-  const [view, setView] = useState(sessionId ? 'myfridge' : 'login');
-  // Remove global showAddForm and promptItem
-  // Instead, keep a ref to the add handlers for each page
+  const [view, setView] = useState(sessionId ? 'fridge' : 'login');
   const addHandlers = React.useRef({});
 
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem('sessionId', sessionId);
-      setView('myfridge');
+      setView('fridge');
     } else {
       localStorage.removeItem('sessionId');
       setView('login');
     }
   }, [sessionId]);
 
-  // Nav button with className for active state
   const navBtn = (label, v) => (
     <button
       onClick={() => setView(v)}
@@ -36,15 +33,13 @@ function App() {
     </button>
   );
 
-
-
   return (
     <div>
       <nav className="main-navbar">
         <div>
           {sessionId && (
             <>
-              {navBtn('My Fridge', 'myfridge')}
+              {navBtn('My Fridge', 'fridge')}
               {navBtn('Grocery List', 'grocery')}
             </>
           )}
@@ -54,10 +49,9 @@ function App() {
             <button
               className="add-btn"
               onClick={() => {
-                // Call the add handler for the current view
                 if (addHandlers.current[view]) addHandlers.current[view]();
               }}
-              title={view === 'myfridge' ? 'Add to Fridge' : view === 'grocery' ? 'Add to Grocery List' : 'Add'}
+              title={view === 'fridge' ? 'Add to Fridge' : view === 'grocery' ? 'Add to Grocery List' : 'Add'}
               type="button"
             >
               +
@@ -71,16 +65,12 @@ function App() {
           </div>
         )}
       </nav>
-
-
-
       {view === 'login' && <Login setSessionId={setSessionId} />}
       {view === 'register' && <Register setSessionId={setSessionId} />}
-      {view === 'myfridge' && (
-        <MyFridge
+      {view === 'fridge' && (
+        <Fridge
           sessionId={sessionId}
-          // Provide a registration function for the add handler
-          registerAddHandler={fn => { addHandlers.current['myfridge'] = fn; }}
+          registerAddHandler={fn => { addHandlers.current['fridge'] = fn; }}
         />
       )}
       {view === 'grocery' && (
