@@ -8,6 +8,23 @@ exports.getFridgeItems = async (req, res) => {
   res.json(result.rows);
 };
 
+exports.getFridgeItemByAlias = async (req, res) => {
+  const { alias } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM fridge_items WHERE user_id = $1 AND LOWER(alias) = LOWER($2) LIMIT 1',
+      [req.user.id, alias]
+    );
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 exports.addFridgeItem = async (req, res) => {
   const { alias, category, quantity, unit } = req.body;
   if (!alias || !category || !quantity || !unit) {

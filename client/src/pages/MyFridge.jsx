@@ -18,7 +18,7 @@ function Fridge({ sessionId, registerAddHandler }) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const getFridgeItems = () => {
-    fetch('/api/fridge_items', {
+    fetch('/api/my_fridge_items', {
       headers: { 'x-session-id': sessionId }
     })
       .then(res => res.json())
@@ -33,18 +33,10 @@ function Fridge({ sessionId, registerAddHandler }) {
     if (registerAddHandler) {
       registerAddHandler(() => setShowAddForm(true));
     }
-  }, [registerAddHandler, sessionId]);
+  }, [registerAddHandler]);
 
   const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
     setError('');
-    // Use new API to check for duplicate fridge item by alias
-    const res = await fetch(`/api/fridge_items/alias/${encodeURIComponent(alias)}`, {
-      headers: { 'x-session-id': sessionId }
-    });
-    if (res.ok) {
-      setError('An item with this name is already in your fridge! Please specify a different name to add a new item');
-      return;
-    }
     await addFridgeItem({
       alias,
       category,
@@ -74,26 +66,9 @@ function Fridge({ sessionId, registerAddHandler }) {
     if (res.ok) getFridgeItems();
   };
 
-
-
   const deleteFridgeItem = async (id) => {
     const item = fridgeItems.find(it => it.id === id);
-    // Use new API to check for duplicate alias
-    const res = await fetch(`/api/grocery_items/alias/${encodeURIComponent(item.alias)}`, {
-      headers: { 'x-session-id': sessionId }
-    });
-    if (res.ok) {
-      setGroceryPrompt({
-        id,
-        alias: item.alias,
-        category: item.category,
-        quantity: item.quantity,
-        unit: item.unit,
-        error: 'An item with this name is already in your grocery list! Please specify a different name to add a new item'
-      });
-    } else {
-      setGroceryPrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit, error: '' });
-    }
+    setGroceryPrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
   };
 
   const handleGrocerySave = async ({ alias, category, quantity, unit }) => {
@@ -101,15 +76,7 @@ function Fridge({ sessionId, registerAddHandler }) {
       setGroceryPrompt(null);
       return;
     }
-    // Use new API to check for duplicate alias
-    const res = await fetch(`/api/grocery_items/alias/${encodeURIComponent(alias)}`, {
-      headers: { 'x-session-id': sessionId }
-    });
-    if (res.ok) {
-      setGroceryPrompt(prev => ({ ...prev, alias, category, quantity, unit, error: 'An item with this name is already in your grocery list! Please specify a different name to add a new item' }));
-      return;
-    }
-    await addGroceryItem({
+  await addGroceryItem({
       alias,
       category,
       quantity,
@@ -150,15 +117,14 @@ function Fridge({ sessionId, registerAddHandler }) {
           sessionId={sessionId}
           onSave={handleFridgeSave}
           onCancel={() => setShowAddForm(false)}
-          error={error}
         />
       )}
       {groceryPrompt && (
         <GroceryPrompt
           item={groceryPrompt}
+          sessionId={sessionId}
           onSave={handleGrocerySave}
           onCancel={handleGroceryCancel}
-          sessionId={sessionId}
         />
       )}
       {fridgeItems.length === 0 && <div>No fridge items yet!</div>}

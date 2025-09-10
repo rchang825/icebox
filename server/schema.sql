@@ -12,7 +12,6 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 -- Ingredients table
 CREATE TABLE ingredients (
     id SERIAL PRIMARY KEY,
@@ -44,3 +43,24 @@ CREATE TABLE grocery_items (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);
+
+-- Meal Plans table
+CREATE TABLE meals (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  time interval HOUR TO MINUTE,
+  instructions TEXT[] NOT NULL,
+  user_id INTEGER
+);
+CREATE INDEX idx_meals_user_id ON meals(user_id);
+
+-- Meal Ingredients table
+CREATE TABLE meal_ingredients (
+  id SERIAL PRIMARY KEY,
+  meal_id INTEGER REFERENCES meals(id) ON DELETE CASCADE,
+  ingredient_name VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL,
+  unit VARCHAR(32) NOT NULL DEFAULT 'unit'
+);
+CREATE INDEX idx_meal_ingredients_meal_id ON meal_ingredients(meal_id);
+CREATE INDEX idx_meal_ingredients_ingredient_name ON meal_ingredients(ingredient_name);

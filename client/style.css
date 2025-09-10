@@ -1,3 +1,13 @@
+/* Error message for modal */
+.error-message {
+  color: #b71c1c;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  padding: 0.5em 1em;
+  border-radius: 4px;
+  margin-bottom: 1em;
+  font-weight: bold;
+}
 /* GroceryItem styles */
 .grocery-item {
   display: flex;

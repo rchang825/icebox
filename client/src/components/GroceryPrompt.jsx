@@ -6,6 +6,11 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
   const [category, setCategory] = useState(item.category || '');
   const [quantity, setQuantity] = useState(item.quantity || 1);
   const [unit, setUnit] = useState(item.unit || 'unit');
+  const [error, setError] = useState(item.error || '');
+
+  React.useEffect(() => {
+    setError(item.error || '');
+  }, [item.error]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,6 +38,7 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
             Unit:
             <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" />
           </label>
+          {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
           <button type="submit">Add to Grocery List</button>
           <button type="button" onClick={onCancel} className="btn-cancel">Don't Add to Grocery List</button>
         </form>

@@ -84,7 +84,22 @@ function GroceryList({ sessionId, registerAddHandler }) {
       setChecked(prev => ({ ...prev, [id]: newChecked }));
       if (newChecked && !item.checked) {
         // Only prompt when checking (not unchecking)
-        setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit });
+        // Check for duplicate fridge item by alias
+        const fridgeRes = await fetch(`/api/fridge_items/alias/${encodeURIComponent(item.alias)}`, {
+          headers: { 'x-session-id': sessionId }
+        });
+        if (fridgeRes.ok) {
+          setFridgePrompt({
+            id,
+            alias: item.alias,
+            category: item.category,
+            quantity: item.quantity,
+            unit: item.unit,
+            error: 'An item with this name is already in your fridge! Please specify a different name to add a new item'
+          });
+        } else {
+          setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit, error: '' });
+        }
       }
     }
   };
@@ -146,6 +161,8 @@ function GroceryList({ sessionId, registerAddHandler }) {
           item={fridgePrompt}
           onSave={handleFridgeSave}
           onCancel={handleFridgeCancel}
+          sessionId={sessionId}
+          error={fridgePrompt.error}
         />
       )}
       <ul style={{ listStyle: 'none', padding: 0 }}>
