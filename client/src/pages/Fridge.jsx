@@ -33,7 +33,7 @@ function Fridge({ sessionId, registerAddHandler }) {
     if (registerAddHandler) {
       registerAddHandler(() => setShowAddForm(true));
     }
-  }, [registerAddHandler]);
+  }, [registerAddHandler, sessionId]);
 
   const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
     setError('');

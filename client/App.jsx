@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Login from './src/pages/Login';
 import Register from './src/pages/Register';
 import Fridge from './src/pages/Fridge';
 import GroceryList from './src/pages/GroceryList';
+import Meal from './src/pages/Meal';
 import FridgePrompt from './src/components/FridgePrompt';
 import GroceryPrompt from './src/components/GroceryPrompt';
 
@@ -11,7 +12,7 @@ import GroceryPrompt from './src/components/GroceryPrompt';
 function App() {
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
   const [view, setView] = useState(sessionId ? 'fridge' : 'login');
-  const addHandlers = React.useRef({});
+  const addHandlers = useRef({});
 
   useEffect(() => {
     if (sessionId) {
@@ -41,6 +42,7 @@ function App() {
             <>
               {navBtn('My Fridge', 'fridge')}
               {navBtn('Grocery List', 'grocery')}
+              {navBtn('Meal Planner', 'meal')}
             </>
           )}
         </div>
@@ -51,7 +53,7 @@ function App() {
               onClick={() => {
                 if (addHandlers.current[view]) addHandlers.current[view]();
               }}
-              title={view === 'fridge' ? 'Add to Fridge' : view === 'grocery' ? 'Add to Grocery List' : 'Add'}
+              title={view === 'fridge' ? 'Add to Fridge' : view === 'grocery' ? 'Add to Grocery List' : view === 'meal' ? 'Add to Meal Planner' : 'Add'}
               type="button"
             >
               +
@@ -77,6 +79,12 @@ function App() {
         <GroceryList
           sessionId={sessionId}
           registerAddHandler={fn => { addHandlers.current['grocery'] = fn; }}
+        />
+      )}
+      {view === 'meal' && (
+        <Meal
+          sessionId={sessionId}
+          registerAddHandler={fn => { addHandlers.current['meal'] = fn; }}
         />
       )}
     </div>
