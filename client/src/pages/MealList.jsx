@@ -27,7 +27,7 @@ function MealList({ sessionId, registerAddHandler }) {
     fetch('/api/grocery_items', { headers: { 'x-session-id': sessionId } })
       .then(res => res.json())
       .then(data => setGroceryItems(Array.isArray(data) ? data : []));
-  }, [sessionId]);
+  }, [sessionId, meals.length]);
 
   const handleMealSubmit = (mealData) => {
     fetch('/api/meals', {
