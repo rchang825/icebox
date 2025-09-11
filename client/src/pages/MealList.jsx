@@ -8,6 +8,7 @@ function MealList({ sessionId, registerAddHandler }) {
   const [meals, setMeals] = useState([]);
   const [fridgeItems, setFridgeItems] = useState([]);
   const [groceryItems, setGroceryItems] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
     if (registerAddHandler) {
@@ -65,18 +66,39 @@ function MealList({ sessionId, registerAddHandler }) {
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
+
   // Sort meals by fridge/grocery match ratios
   const sortedMeals = sortMealsByCategoryMatch(meals, fridgeItems, groceryItems);
+  // Filter meals by search keyword (case-insensitive) in name, ingredient categories, or aliases
+  const keyword = searchKeyword.toLowerCase();
+  const filteredMeals = sortedMeals.filter(meal => {
+    // Check meal name
+    if (meal.name && meal.name.toLowerCase().includes(keyword)) return true;
+    // Check meal_ingredients categories and aliases
+    if (Array.isArray(meal.ing_categories)) {
+      for (const cat of meal.ing_categories) {
+        if (cat && cat.toLowerCase().includes(keyword)) return true;
+      }
+    }
+    return false;
+  });
 
   return (
     <div id="meal-planner">
       <h2>Meal Planner</h2>
+      <input
+        type="text"
+        id="meal-search"
+        placeholder="Search meals by name or ingredient..."
+        value={searchKeyword}
+        onChange={e => setSearchKeyword(e.target.value)}
+      />
       {mealPrompt && (
         <MealPrompt onSubmit={handleMealSubmit} onCancel={handleCancel} />
       )}
-      {meals.length === 0 && <div>No meals yet!</div>}
-      <ul style={{ listStyleType: 'none', padding: '1em' }}>
-        {sortedMeals.map((meal, index) => {
+      {filteredMeals.length === 0 && <div>No meals found!</div>}
+      <ul style={{ listStyleType: 'none', padding: 0 }}>
+        {filteredMeals.map((meal, index) => {
           const [inFridge, inGrocery, stillNeeded] = getMealIngredientMatchCounts(meal, fridgeItems, groceryItems);
           return (
             <li key={index}>

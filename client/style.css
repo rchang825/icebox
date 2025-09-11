@@ -237,3 +237,9 @@ button:hover {
   margin-top: 0.5rem;
   background: #fafafa;
 }
+#meal-search {
+   margin-bottom: 1em;
+   padding: 0.5em;
+   width: 100%;
+   max-width: 400px;
+}
