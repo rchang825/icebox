@@ -1,11 +1,10 @@
 const pool = require('../db');
 
-// Get all meals for the logged-in user
+// Get all meals
 exports.getMeals = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM meals WHERE user_id = $1 ORDER BY id',
-      [req.user.id]
+      'SELECT * FROM meals',
     );
     res.json(result.rows);
   } catch (err) {
@@ -13,13 +12,13 @@ exports.getMeals = async (req, res) => {
   }
 };
 
-// Get a single meal by id for the logged-in user
+// Get a single meal by id
 exports.getMealById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'SELECT * FROM meals WHERE id = $1 AND user_id = $2',
-      [id, req.user.id]
+      'SELECT * FROM meals WHERE id = $1',
+      [id]
     );
     if (!result.rows.length) return res.sendStatus(404);
     res.json(result.rows[0]);
@@ -51,12 +50,25 @@ exports.addMeal = async (req, res) => {
       'INSERT INTO meals (name, time, servings, instructions, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
       [name, time, servings, instructions, req.user.id]
     );
-    ingredients.forEach(async ingredient => {
+    for (const ingredient of ingredients) {
+      const cat = (ingredient.category || '').trim();
+      if (cat) {
+        const catRes = await pool.query('SELECT 1 FROM ingredients WHERE name = $1', [cat]);
+        if (catRes.rowCount === 0) {
+          await pool.query('INSERT INTO ingredients (name) VALUES ($1)', [cat]);
+        }
+      }
       await pool.query(
         'INSERT INTO meal_ingredients (meal_id, alias, category, quantity, unit) VALUES ($1, $2, $3, $4, $5)',
         [meal_id.rows[0].id, ingredient.alias, ingredient.category, ingredient.quantity, ingredient.unit]
       );
-    });
+    }
+    await pool.query(
+      `UPDATE meals SET ing_categories = (
+         SELECT array_agg(DISTINCT category) FROM meal_ingredients WHERE meal_id = $1
+       ) WHERE id = $1`,
+      [meal_id.rows[0].id]
+    );
     res.json({ id: meal_id.rows[0].id });
   } catch (err) {
     res.status(400).json({ error: err.message });
