@@ -44,6 +44,7 @@ CREATE TABLE grocery_items (
 );
 CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);
 
+-- Meal Plans table
 CREATE TABLE meals (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -51,7 +52,7 @@ CREATE TABLE meals (
   servings INTEGER DEFAULT 1,
   instructions TEXT[] NOT NULL,
   user_id INTEGER,
-  ing_categories TEXT[] DEFAULT '{}'
+  ing_categories TEXT[]
 );
 CREATE INDEX idx_meals_user_id ON meals(user_id);
 
