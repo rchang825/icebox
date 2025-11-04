@@ -10,12 +10,45 @@ import GroceryPrompt from './src/components/GroceryPrompt';
 import MealPrompt from './src/components/MealPrompt';
 
 function App() {
-  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
+  const [sessionId, setSessionId] = useState(null);
+  const [isValidating, setIsValidating] = useState(true);
   const addHandlers = useRef({});
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Validate session on app startup
   useEffect(() => {
+    const storedSessionId = localStorage.getItem('sessionId');
+    if (storedSessionId) {
+      // Validate the session with the server
+      fetch('/api/me', {
+        headers: { 'x-session-id': storedSessionId }
+      })
+      .then(res => {
+        if (res.ok) {
+          setSessionId(storedSessionId);
+        } else {
+          // Session is invalid, clear it
+          localStorage.removeItem('sessionId');
+          setSessionId(null);
+        }
+      })
+      .catch(() => {
+        // Network error or server down, clear invalid session
+        localStorage.removeItem('sessionId');
+        setSessionId(null);
+      })
+      .finally(() => {
+        setIsValidating(false);
+      });
+    } else {
+      setIsValidating(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isValidating) return; // Don't navigate while validating
+
     if (sessionId) {
       localStorage.setItem('sessionId', sessionId);
       if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/') {
@@ -27,7 +60,7 @@ function App() {
         navigate('/login', { replace: true });
       }
     }
-  }, [sessionId, location, navigate]);
+  }, [sessionId, isValidating]);
 
   const getView = () => {
     if (location.pathname === '/fridge') return 'fridge';
@@ -36,6 +69,21 @@ function App() {
     return '';
   };
   const view = getView();
+
+  // Show loading while validating session
+  if (isValidating) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div>
