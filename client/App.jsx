@@ -8,6 +8,7 @@ import MealList from './src/pages/MealList';
 import FridgePrompt from './src/components/FridgePrompt';
 import GroceryPrompt from './src/components/GroceryPrompt';
 import MealPrompt from './src/components/MealPrompt';
+import UploadReceipt from './src/pages/UploadReceipt';
 
 function App() {
   const [sessionId, setSessionId] = useState(null);
@@ -66,6 +67,7 @@ function App() {
     if (location.pathname === '/fridge') return 'fridge';
     if (location.pathname === '/grocerylist') return 'grocery';
     if (location.pathname === '/meals') return 'meal';
+    if (location.pathname === '/upload') return 'upload';
     return '';
   };
   const view = getView();
@@ -93,12 +95,13 @@ function App() {
             <>
               <Link to="/fridge" className={`nav-btn${view === 'fridge' ? ' active' : ''}`}>My Fridge</Link>
               <Link to="/grocerylist" className={`nav-btn${view === 'grocery' ? ' active' : ''}`}>Grocery List</Link>
-              <Link to="/meals" className={`nav-btn${view === 'meal' ? ' active' : ''}`}>Meal Planner</Link>
+              {/* <Link to="/meals" className={`nav-btn${view === 'meal' ? ' active' : ''}`}>Meal Planner</Link> */}
             </>
           )}
         </div>
         {sessionId ? (
           <div>
+            {view === 'fridge' && <Link to="/upload">Upload Receipt</Link>}
             <button
               className="add-btn"
               onClick={() => {
@@ -122,8 +125,9 @@ function App() {
         <Route path="/login" element={<Login setSessionId={setSessionId} />} />
         <Route path="/register" element={<Register setSessionId={setSessionId} />} />
         <Route path="/fridge" element={<Fridge sessionId={sessionId} registerAddHandler={fn => { addHandlers.current['fridge'] = fn; }} />} />
+        <Route path="/upload" element={<UploadReceipt sessionId={sessionId} />} />
         <Route path="/grocerylist" element={<GroceryList sessionId={sessionId} registerAddHandler={fn => { addHandlers.current['grocery'] = fn; }} />} />
-        <Route path="/meals" element={<MealList sessionId={sessionId} registerAddHandler={fn => { addHandlers.current['meal'] = fn; }} />} />
+        {/* <Route path="/meals" element={<MealList sessionId={sessionId} registerAddHandler={fn => { addHandlers.current['meal'] = fn; }} />} /> */}
         <Route path="*" element={<Navigate to={sessionId ? '/fridge' : '/login'} />} />
       </Routes>
     </div>

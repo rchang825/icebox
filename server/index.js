@@ -2,6 +2,7 @@ const ingredientRoutes = require('./routes/ingredient')(authenticateSession);
 const fridgeRoutes = require('./routes/fridge')(authenticateSession);
 const groceryRoutes = require('./routes/grocery')(authenticateSession);
 const mealRoutes = require('./routes/meal')(authenticateSession);
+const uploadRoutes = require('./routes/upload')(authenticateSession);
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -73,6 +74,7 @@ app.use('/api', fridgeRoutes);
 app.use('/api', groceryRoutes);
 app.use('/api', ingredientRoutes);
 app.use('/api', mealRoutes);
+app.use('/api', uploadRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
