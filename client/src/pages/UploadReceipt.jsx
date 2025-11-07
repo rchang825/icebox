@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import NewFridgeItem from '../components/NewFridgeItem';
 
 function UploadReceipt({ sessionId }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [extractedText, setExtractedText] = useState('');
+  const [groceries, setGroceries] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,6 +26,7 @@ function UploadReceipt({ sessionId }) {
       setSelectedFile(file);
       setError('');
       setExtractedText(''); // Clear previous results
+      setGroceries([]); // Clear previous groceries
     }
   };
 
@@ -54,6 +57,29 @@ function UploadReceipt({ sessionId }) {
 
       if (response.ok) {
         setExtractedText(data.extractedText);
+        console.log('Raw extracted text:', data.extractedText);
+
+        // Parse the groceries and store them separately
+        try {
+          const parsedData = JSON.parse(data.extractedText);
+          console.log('Parsed data:', parsedData);
+
+          // Handle both formats: direct array or object with groceries property
+          let groceriesArray;
+          if (Array.isArray(parsedData)) {
+            groceriesArray = parsedData;
+          } else if (parsedData.groceries && Array.isArray(parsedData.groceries)) {
+            groceriesArray = parsedData.groceries;
+          } else {
+            groceriesArray = [];
+          }
+
+          console.log('Groceries array:', groceriesArray);
+          setGroceries(groceriesArray);
+        } catch (parseError) {
+          console.error('Error parsing extracted text:', parseError);
+          setError('Error parsing grocery items from response');
+        }
       } else {
         setError(data.error || 'Failed to process image');
       }
@@ -113,17 +139,31 @@ function UploadReceipt({ sessionId }) {
         {isLoading ? 'Processing...' : 'Extract Text'}
       </button>
 
+      {/* Debug information */}
       {extractedText && (
+        <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', fontSize: '12px' }}>
+          <strong>Debug Info:</strong>
+          <p><strong>Raw Response:</strong> {extractedText}</p>
+          <p><strong>Groceries Array Length:</strong> {groceries?.length || 0}</p>
+          <p><strong>Groceries Content:</strong> {JSON.stringify(groceries, null, 2)}</p>
+        </div>
+      )}
+
+      {Array.isArray(groceries) && groceries.length > 0 && (
         <div style={{ marginTop: '20px' }}>
-          <h3>Extracted Text:</h3>
-          <div style={{
-            border: '1px solid #ddd',
-            padding: '15px',
-            backgroundColor: '#f9f9f9',
-            whiteSpace: 'pre-wrap'
-          }}>
-            {extractedText}
-          </div>
+          <h3>Extracted Grocery Items:</h3>
+          {groceries.map((item, index) => (
+            <NewFridgeItem
+              key={index}
+              item={{
+                alias: item.name || '',
+                quantity: item.quantity || 1,
+              }}
+              sessionId={sessionId}
+              onSave={() => {}}
+              onCancel={() => {}}
+            />
+          ))}
         </div>
       )}
     </div>
