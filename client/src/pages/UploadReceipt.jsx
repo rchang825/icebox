@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import NewFridgeItem from '../components/NewFridgeItem';
+import FridgePrompt from '../components/FridgePrompt';
+import { addFridgeItem } from '../utils/fridgeUtils';
 
 function UploadReceipt({ sessionId }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -7,6 +8,7 @@ function UploadReceipt({ sessionId }) {
   const [groceries, setGroceries] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [itemStates, setItemStates] = useState({}); // Track save status for each item
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -27,69 +29,135 @@ function UploadReceipt({ sessionId }) {
       setError('');
       setExtractedText(''); // Clear previous results
       setGroceries([]); // Clear previous groceries
+      setItemStates({}); // Clear previous item states
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file first');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
+  // Handle saving individual item to fridge
+  const handleSaveItem = async (itemId, itemData) => {
+    // Set item as saving
+    setItemStates(prev => ({
+      ...prev,
+      [itemId]: { status: 'saving', error: null }
+    }));
 
     try {
-      // Create FormData object to send file
-      const formData = new FormData();
-      formData.append('image', selectedFile);
-
-      // Send file to backend
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'x-session-id': sessionId
+      await addFridgeItem({
+        alias: itemData.alias,
+        category: itemData.category,
+        quantity: itemData.quantity,
+        unit: itemData.unit,
+        sessionId,
+        onSuccess: () => {
+          // Mark item as saved
+          setItemStates(prev => ({
+            ...prev,
+            [itemId]: { status: 'saved', error: null }
+          }));
         },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setExtractedText(data.extractedText);
-        console.log('Raw extracted text:', data.extractedText);
-
-        // Parse the groceries and store them separately
-        try {
-          const parsedData = JSON.parse(data.extractedText);
-          console.log('Parsed data:', parsedData);
-
-          // Handle both formats: direct array or object with groceries property
-          let groceriesArray;
-          if (Array.isArray(parsedData)) {
-            groceriesArray = parsedData;
-          } else if (parsedData.groceries && Array.isArray(parsedData.groceries)) {
-            groceriesArray = parsedData.groceries;
-          } else {
-            groceriesArray = [];
-          }
-
-          console.log('Groceries array:', groceriesArray);
-          setGroceries(groceriesArray);
-        } catch (parseError) {
-          console.error('Error parsing extracted text:', parseError);
-          setError('Error parsing grocery items from response');
+        onError: (error) => {
+          // Mark item as error
+          setItemStates(prev => ({
+            ...prev,
+            [itemId]: { status: 'error', error: error || 'Failed to save item' }
+          }));
         }
-      } else {
-        setError(data.error || 'Failed to process image');
-      }
+      });
     } catch (err) {
-      setError('Network error: ' + err.message);
-    } finally {
-      setIsLoading(false);
+      // Mark item as error
+      setItemStates(prev => ({
+        ...prev,
+        [itemId]: { status: 'error', error: 'Network error: ' + err.message }
+      }));
     }
   };
 
+  // Handle canceling/removing individual item
+  const handleCancelItem = (itemId) => {
+    setGroceries(prev => prev.filter(item => item.id !== itemId));
+    setItemStates(prev => {
+      const newStates = { ...prev };
+      delete newStates[itemId];
+      return newStates;
+    });
+  };
+
+  // const handleUpload = async () => {
+  //   if (!selectedFile) {
+  //     setError('Please select a file first');
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setError('');
+
+  //   try {
+  //     // Create FormData object to send file
+  //     const formData = new FormData();
+  //     formData.append('image', selectedFile);
+
+  //     // Send file to backend
+  //     const response = await fetch('/api/upload', {
+  //       method: 'POST',
+  //       headers: {
+  //         'x-session-id': sessionId
+  //       },
+  //       body: formData
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       setExtractedText(data.extractedText);
+  //       console.log('Raw extracted text:', data.extractedText);
+
+  //       // Parse the groceries and store them separately
+  //       try {
+  //         const parsedData = JSON.parse(data.extractedText);
+  //         console.log('Parsed data:', parsedData);
+
+  //         // Handle both formats: direct array or object with groceries property
+  //         let groceriesArray;
+  //         if (Array.isArray(parsedData)) {
+  //           groceriesArray = parsedData;
+  //         } else if (parsedData.groceries && Array.isArray(parsedData.groceries)) {
+  //           groceriesArray = parsedData.groceries;
+  //         } else {
+  //           groceriesArray = [];
+  //         }
+
+  //         console.log('Groceries array:', groceriesArray);
+  //         setGroceries(groceriesArray);
+  //       } catch (parseError) {
+  //         console.error('Error parsing extracted text:', parseError);
+  //         setError('Error parsing grocery items from response');
+  //       }
+  //     } else {
+  //       setError(data.error || 'Failed to process image');
+  //     }
+  //   } catch (err) {
+  //     setError('Network error: ' + err.message);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // TODO: Remove mock and uncomment above when backend is ready
+  const handleUpload = async () => {
+    // Mock response for testing
+    setIsLoading(true);
+    let extractedText = JSON.stringify([{ "name": "Marinara", "quantity": 1 }, { "name": "Zucchini", "quantity": 3 }, { "name": "Heavy Whipping Cream", "quantity": 1 }, { "name": "Butter", "quantity": 1 }]);
+    setExtractedText(extractedText);
+
+    // Add unique IDs to each grocery item
+    const parsedGroceries = JSON.parse(extractedText).map((item, index) => ({
+      ...item,
+      id: Date.now() + index // Simple unique ID generation
+    }));
+
+    setGroceries(parsedGroceries);
+    setIsLoading(false);
+  }
   return (
     <div style={{ padding: '20px', maxWidth: '800px' }}>
       <h2>Upload Receipt</h2>
@@ -112,7 +180,7 @@ function UploadReceipt({ sessionId }) {
         </div>
       )}
 
-      {selectedFile && (
+      {/* {selectedFile && (
         <div style={{ marginBottom: '20px' }}>
           <h3>Selected File:</h3>
           <p><strong>Name:</strong> {selectedFile.name}</p>
@@ -123,7 +191,7 @@ function UploadReceipt({ sessionId }) {
             style={{ maxWidth: '400px', maxHeight: '300px', objectFit: 'contain' }}
           />
         </div>
-      )}
+      )} */}
 
       <button
         onClick={handleUpload}
@@ -140,30 +208,68 @@ function UploadReceipt({ sessionId }) {
       </button>
 
       {/* Debug information */}
-      {extractedText && (
+      {/* {extractedText && (
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', fontSize: '12px' }}>
           <strong>Debug Info:</strong>
           <p><strong>Raw Response:</strong> {extractedText}</p>
           <p><strong>Groceries Array Length:</strong> {groceries?.length || 0}</p>
           <p><strong>Groceries Content:</strong> {JSON.stringify(groceries, null, 2)}</p>
         </div>
-      )}
+      )} */}
 
       {Array.isArray(groceries) && groceries.length > 0 && (
         <div style={{ marginTop: '20px' }}>
           <h3>Extracted Grocery Items:</h3>
-          {groceries.map((item, index) => (
-            <NewFridgeItem
-              key={index}
-              item={{
-                alias: item.name || '',
-                quantity: item.quantity || 1,
-              }}
-              sessionId={sessionId}
-              onSave={() => {}}
-              onCancel={() => {}}
-            />
-          ))}
+          <div style={{ marginBottom: '20px' }}>
+            <p>Review each item and save to your fridge:</p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px'
+            }}>
+            </div>
+          </div>
+          {groceries.map((item) => {
+            const itemState = itemStates[item.id] || { status: 'unsaved', error: null };
+
+            if (itemState.status === 'saved') {
+              return (
+                <div key={item.id} style={{
+                  padding: '15px',
+                  marginBottom: '10px',
+                  backgroundColor: '#d4edda',
+                  border: '1px solid #c3e6cb',
+                  borderRadius: '5px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <span style={{ color: '#155724', fontWeight: 'bold' }}>✓ Saved to Fridge! </span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <FridgePrompt
+                key={item.id}
+                item={{
+                  alias: item.name || '',
+                  category: item.name || '',
+                  quantity: item.quantity || 1,
+                }}
+                sessionId={sessionId}
+                onSave={(itemData) => handleSaveItem(item.id, itemData)}
+                onCancel={() => handleCancelItem(item.id)}
+                error={itemState.error}
+                isModal={false}
+                // Pass loading state if saving
+                isSaving={itemState.status === 'saving'}
+              />
+            );
+          })}
         </div>
       )}
     </div>
