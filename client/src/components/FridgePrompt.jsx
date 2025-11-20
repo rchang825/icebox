@@ -40,7 +40,7 @@ function FridgePrompt({ item, onSave, onCancel, isModal = true, sessionId, error
   };
 
   return (
-    <div className={isModal ? "prompt-modal" : ""}>
+    <div className={isModal ? "prompt-modal" : "fridge-item-card"}>
       <div className={isModal ? "prompt-content" : ""}>
         <h3>Add to Fridge?</h3>
         <form onSubmit={handleSubmit}>
@@ -61,12 +61,14 @@ function FridgePrompt({ item, onSave, onCancel, isModal = true, sessionId, error
             <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" disabled={isSaving} />
           </label>
           {localError && <div style={{ color: 'red', marginBottom: 8 }}>{localError}</div>}
-          <button type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Add to Fridge'}
-          </button>
-          <button type="button" onClick={onCancel} className="btn-cancel" disabled={isSaving}>
-            Don't Add to Fridge
-          </button>
+          <div className='button-wrapper'>
+            <button type="submit" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Add to Fridge'}
+            </button>
+            <button type="button" onClick={onCancel} className="btn-cancel" disabled={isSaving}>
+              Don't Add to Fridge
+            </button>
+          </div>
         </form>
       </div>
     </div>

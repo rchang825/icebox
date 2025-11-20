@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FridgePrompt from '../components/FridgePrompt';
 import { addFridgeItem } from '../utils/fridgeUtils';
+import { Link } from 'react-router-dom';
 
 function UploadReceipt({ sessionId }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -74,12 +75,16 @@ function UploadReceipt({ sessionId }) {
 
   // Handle canceling/removing individual item
   const handleCancelItem = (itemId) => {
-    setGroceries(prev => prev.filter(item => item.id !== itemId));
-    setItemStates(prev => {
-      const newStates = { ...prev };
-      delete newStates[itemId];
-      return newStates;
-    });
+    // setGroceries(prev => prev.filter(item => item.id !== itemId));
+    // setItemStates(prev => {
+    //   const newStates = { ...prev };
+    //   delete newStates[itemId];
+    //   return newStates;
+    // });
+    setItemStates(prev => ({
+      ...prev,
+      [itemId]: { status: 'cancelled', error: null }
+    }));
   };
 
   // const handleUpload = async () => {
@@ -221,54 +226,32 @@ function UploadReceipt({ sessionId }) {
         <div style={{ marginTop: '20px' }}>
           <h3>Extracted Grocery Items:</h3>
           <div style={{ marginBottom: '20px' }}>
-            <p>Review each item and save to your fridge:</p>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '10px'
-            }}>
-            </div>
+            {/* <p>
+              {Object.values(itemStates).filter(state => state.status === 'unsaved').length > 0 && 'Please review each item and save to fridge'}
+            </p> */}
+            <Link to="/fridge">Go to Fridge</Link>
           </div>
           {groceries.map((item) => {
             const itemState = itemStates[item.id] || { status: 'unsaved', error: null };
-
-            if (itemState.status === 'saved') {
+            if (itemState.status === 'unsaved') {
               return (
-                <div key={item.id} style={{
-                  padding: '15px',
-                  marginBottom: '10px',
-                  backgroundColor: '#d4edda',
-                  border: '1px solid #c3e6cb',
-                  borderRadius: '5px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <div>
-                    <span style={{ color: '#155724', fontWeight: 'bold' }}>✓ Saved to Fridge! </span>
-                  </div>
-                </div>
+                <FridgePrompt
+                  key={item.id}
+                  item={{
+                    alias: item.name || '',
+                    category: item.name || '',
+                    quantity: item.quantity || 1,
+                  }}
+                  sessionId={sessionId}
+                  onSave={(itemData) => handleSaveItem(item.id, itemData)}
+                  onCancel={() => handleCancelItem(item.id)}
+                  error={itemState.error}
+                  isModal={false}
+                  // Pass loading state if saving
+                  isSaving={itemState.status === 'saving'}
+                />
               );
             }
-
-            return (
-              <FridgePrompt
-                key={item.id}
-                item={{
-                  alias: item.name || '',
-                  category: item.name || '',
-                  quantity: item.quantity || 1,
-                }}
-                sessionId={sessionId}
-                onSave={(itemData) => handleSaveItem(item.id, itemData)}
-                onCancel={() => handleCancelItem(item.id)}
-                error={itemState.error}
-                isModal={false}
-                // Pass loading state if saving
-                isSaving={itemState.status === 'saving'}
-              />
-            );
           })}
         </div>
       )}

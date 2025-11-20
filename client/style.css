@@ -121,7 +121,6 @@
   font-size: 1rem;
   font-weight: normal;
   text-decoration: none;
-  transition: background 0.2s, font-weight 0.2s;
 }
 .nav-btn.active {
   font-weight: bold;
@@ -194,9 +193,6 @@ th {
 tr:last-child td {
   border-bottom: none;
 }
-button {
-  transition: background 0.2s;
-}
 button:hover {
   opacity: 0.9;
 }
@@ -242,4 +238,7 @@ button:hover {
    padding: 0.5em;
    width: 100%;
    max-width: 400px;
+}
+.fridge-item-card .button-wrapper{
+  display: flex;
 }
