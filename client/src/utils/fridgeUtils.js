@@ -1,5 +1,5 @@
 // Utility for adding a fridge item with ingredient creation if needed
-export async function addFridgeItem({ alias, category, quantity, unit, sessionId, onSuccess, onError }) {
+export async function addFridgeItem({ alias, category, quantity, unit, tags = [], sessionId, onSuccess, onError }) {
   try {
     console.log('addFridgeItem called with:', { alias, category, quantity, unit, sessionId });
 
@@ -41,7 +41,7 @@ export async function addFridgeItem({ alias, category, quantity, unit, sessionId
     }
 
     // 3. Add fridge item
-    const itemData = { alias, category: ingredient.name, quantity, unit };
+  const itemData = { alias, category: ingredient.name, quantity, unit, tags };
     console.log('Saving fridge item:', itemData);
     console.log('Field validation:');
     console.log('- alias:', JSON.stringify(alias), 'truthy:', !!alias);

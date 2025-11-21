@@ -7,6 +7,7 @@ function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }
   const [unit, setUnit] = useState(item.unit);
   // Quantity is always editable, so keep it in sync with parent
   const [quantity, setQuantity] = useState(item.quantity);
+  const [tagsInput, setTagsInput] = useState(Array.isArray(item.tags) ? item.tags.join(', ') : '');
 
   // Keep quantity in sync with parent updates
   React.useEffect(() => {
@@ -15,7 +16,8 @@ function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }
 
   const handleSave = () => {
     setEdit(false);
-    updateItem(item.id, alias, category, quantity, unit);
+    const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+    updateItem(item.id, alias, category, quantity, unit, tags);
   };
   const handleCancel = () => {
     setEdit(false);
@@ -38,6 +40,22 @@ function FridgeItem({ item, setItems, updateItem, deleteItem, setGroceryPrompt }
           <input value={category} onChange={e => setCategory(e.target.value)} />
         ) : (
           <span>{item.category}</span>
+        )}
+      </td>
+      <td>
+        {edit ? (
+          <input
+            value={tagsInput}
+            onChange={e => setTagsInput(e.target.value)}
+            placeholder="tag1, tag2"
+          />
+        ) : (
+          <div className="tags-cell">
+            {(item.tags || []).map((t, i) => (
+              <span key={i} className="tag-badge">{t}</span>
+            ))}
+            {(!item.tags || item.tags.length === 0) && <span className="tag-empty">No tags</span>}
+          </div>
         )}
       </td>
   <td className="nowrap">

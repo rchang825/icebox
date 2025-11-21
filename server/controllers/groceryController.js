@@ -27,14 +27,17 @@ exports.getGroceryItemByAlias = async (req, res) => {
 };
 
 exports.addGroceryItem = async (req, res) => {
-  const { alias, category, quantity, unit, checked } = req.body;
+  let { alias, category, quantity, unit, checked, tags } = req.body;
   if (!alias || !category || !quantity || !unit) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+  if (!tags) tags = [];
+  if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+  if (!Array.isArray(tags)) tags = [];
   try {
     const result = await pool.query(
-      'INSERT INTO grocery_items (alias, category, quantity, unit, checked, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [alias, category, quantity, unit, checked || false, req.user.id]
+      'INSERT INTO grocery_items (alias, category, quantity, unit, checked, tags, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [alias, category, quantity, unit, checked || false, tags, req.user.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -44,11 +47,14 @@ exports.addGroceryItem = async (req, res) => {
 
 exports.updateGroceryItem = async (req, res) => {
   const { id } = req.params;
-  const { alias, category, quantity, unit, checked } = req.body;
+  let { alias, category, quantity, unit, checked, tags } = req.body;
+  if (!tags) tags = [];
+  if (typeof tags === 'string') tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+  if (!Array.isArray(tags)) tags = [];
   try {
     const result = await pool.query(
-      'UPDATE grocery_items SET alias = $1, category = $2, quantity = $3, unit = $4, checked = $5 WHERE id = $6 RETURNING *',
-      [alias, category, quantity, unit, checked, id]
+      'UPDATE grocery_items SET alias = $1, category = $2, quantity = $3, unit = $4, checked = $5, tags = $6 WHERE id = $7 RETURNING *',
+      [alias, category, quantity, unit, checked, tags, id]
     );
     res.json(result.rows[0]);
   } catch (err) {

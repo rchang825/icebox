@@ -242,3 +242,24 @@ button:hover {
 .fridge-item-card .button-wrapper{
   display: flex;
 }
+/* Tag badges */
+.tags-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.tag-badge {
+  background: #e0f7fa;
+  color: #006064;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  border: 1px solid #b2ebf2;
+}
+.tag-empty {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}

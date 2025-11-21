@@ -1,5 +1,5 @@
 // Utility for adding a grocery item with ingredient creation if needed
-export async function addGroceryItem({ alias, category, quantity, unit, sessionId, onSuccess, onDuplicate }) {
+export async function addGroceryItem({ alias, category, quantity, unit, tags = [], sessionId, onSuccess, onDuplicate }) {
   // 1. Check if ingredient exists
   const ingRes = await fetch('/api/ingredients', { headers: { 'x-session-id': sessionId } });
   const ingredients = await ingRes.json();
@@ -27,7 +27,7 @@ export async function addGroceryItem({ alias, category, quantity, unit, sessionI
       'Content-Type': 'application/json',
       'x-session-id': sessionId
     },
-    body: JSON.stringify({ alias, category: ingredient.name, quantity, unit, checked: false })
+    body: JSON.stringify({ alias, category: ingredient.name, quantity, unit, checked: false, tags })
   });
   if (res.ok && onSuccess) {
     onSuccess();

@@ -12,6 +12,8 @@ function GroceryList({ sessionId, registerAddHandler }) {
   const [fridgePrompt, setFridgePrompt] = useState(null);
   const [groceryPrompt, setGroceryPrompt] = useState(null);
   const [userName, setUserName] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [sortByTag, setSortByTag] = useState(false);
 
   // Fetch user name on mount
   useEffect(() => {
@@ -19,7 +21,7 @@ function GroceryList({ sessionId, registerAddHandler }) {
       .then(res => res.json())
       .then(data => setUserName(data.name || ''));
     if (registerAddHandler) {
-      registerAddHandler(() => setGroceryPrompt({ alias: '', category: '', quantity: 1, unit: 'unit' }));
+  registerAddHandler(() => setGroceryPrompt({ alias: '', category: '', quantity: 1, unit: 'unit', tags: [] }));
     }
   }, [registerAddHandler, sessionId]);
 
@@ -75,7 +77,8 @@ function GroceryList({ sessionId, registerAddHandler }) {
         category: item.category,
         quantity: item.quantity,
         unit: item.unit,
-        checked: newChecked
+        checked: newChecked,
+        tags: item.tags || []
       })
     });
     if (res.ok) {
@@ -95,21 +98,23 @@ function GroceryList({ sessionId, registerAddHandler }) {
             category: item.category,
             quantity: item.quantity,
             unit: item.unit,
+            tags: item.tags || [],
             error: 'An item with this name is already in your fridge! Please specify a different name to add a new item'
           });
         } else {
-          setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit, error: '' });
+          setFridgePrompt({ id, alias: item.alias, category: item.category, quantity: item.quantity, unit: item.unit, tags: item.tags || [], error: '' });
         }
       }
     }
   };
 
-  const handleFridgeSave = async ({ alias, category, quantity, unit }) => {
+  const handleFridgeSave = async ({ alias, category, quantity, unit, tags }) => {
     await addFridgeItem({
       alias,
       category,
       quantity,
       unit,
+      tags,
       sessionId,
       onSuccess: () => setFridgePrompt(null)
     });
@@ -128,12 +133,13 @@ function GroceryList({ sessionId, registerAddHandler }) {
         <GroceryPrompt
           item={groceryPrompt}
           sessionId={sessionId}
-          onSave={async ({ alias, category, quantity, unit }) => {
+          onSave={async ({ alias, category, quantity, unit, tags }) => {
             await addGroceryItem({
               alias,
               category,
               quantity,
               unit,
+              tags,
               sessionId,
               onSuccess: () => {
                 setGroceryPrompt(null);
@@ -165,8 +171,28 @@ function GroceryList({ sessionId, registerAddHandler }) {
           error={fridgePrompt.error}
         />
       )}
+      <div style={{ margin: '1rem 0', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <input
+          placeholder="Filter by tag (single)"
+          value={tagFilter}
+          onChange={e => setTagFilter(e.target.value)}
+        />
+      </div>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        {items.map(item => (
+        {items
+          .filter(item => {
+            if (!tagFilter.trim()) return true;
+            return (item.tags || []).some(t => t.toLowerCase() === tagFilter.trim().toLowerCase());
+          })
+          .sort((a, b) => {
+            if (!sortByTag) return 0;
+            const at = (a.tags && a.tags[0]) ? a.tags[0].toLowerCase() : '';
+            const bt = (b.tags && b.tags[0]) ? b.tags[0].toLowerCase() : '';
+            if (at < bt) return -1;
+            if (at > bt) return 1;
+            return 0;
+          })
+          .map(item => (
           <GroceryItem
             key={item.id}
             item={item}

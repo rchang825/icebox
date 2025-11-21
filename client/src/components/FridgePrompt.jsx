@@ -6,6 +6,7 @@ function FridgePrompt({ item, onSave, onCancel, isModal = true, sessionId, error
   const [category, setCategory] = useState(item.category || '');
   const [quantity, setQuantity] = useState(item.quantity || 1);
   const [unit, setUnit] = useState(item.unit || 'unit');
+  const [tagsInput, setTagsInput] = useState(Array.isArray(item.tags) ? item.tags.join(', ') : '');
   const [localError, setLocalError] = useState(error || item.error || '');
 
   React.useEffect(() => {
@@ -36,7 +37,11 @@ function FridgePrompt({ item, onSave, onCancel, isModal = true, sessionId, error
     // Clear any previous errors
     setLocalError('');
 
-    onSave({ alias: alias.trim(), category: category.trim(), quantity, unit: unit.trim() });
+    const tags = tagsInput
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+    onSave({ alias: alias.trim(), category: category.trim(), quantity, unit: unit.trim(), tags });
   };
 
   return (
@@ -59,6 +64,15 @@ function FridgePrompt({ item, onSave, onCancel, isModal = true, sessionId, error
           <label>
             Unit:
             <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" disabled={isSaving} />
+          </label>
+          <label>
+            Tags (comma-separated):
+            <input
+              value={tagsInput}
+              onChange={e => setTagsInput(e.target.value)}
+              placeholder="tag1, tag2"
+              disabled={isSaving}
+            />
           </label>
           {localError && <div style={{ color: 'red', marginBottom: 8 }}>{localError}</div>}
           <div className='button-wrapper'>

@@ -6,6 +6,7 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
   const [category, setCategory] = useState(item.category || '');
   const [quantity, setQuantity] = useState(item.quantity || 1);
   const [unit, setUnit] = useState(item.unit || 'unit');
+  const [tagsInput, setTagsInput] = useState(Array.isArray(item.tags) ? item.tags.join(', ') : '');
   const [error, setError] = useState(item.error || '');
 
   React.useEffect(() => {
@@ -14,7 +15,8 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ alias, category, quantity, unit });
+    const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+    onSave({ alias, category, quantity, unit, tags });
   };
 
   return (
@@ -37,6 +39,14 @@ function GroceryPrompt({ item, onSave, onCancel, sessionId }) {
           <label>
             Unit:
             <input value={unit} onChange={e => setUnit(e.target.value)} required className="input-unit-wide" />
+          </label>
+          <label>
+            Tags (comma-separated):
+            <input
+              value={tagsInput}
+              onChange={e => setTagsInput(e.target.value)}
+              placeholder="tag1, tag2"
+            />
           </label>
           {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
           <button type="submit">Add to Grocery List</button>

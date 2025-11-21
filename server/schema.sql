@@ -22,10 +22,12 @@ CREATE INDEX idx_ingredients_name ON ingredients(name);
 -- Fridge Items table
 CREATE TABLE fridge_items (
     id SERIAL PRIMARY KEY,
-    alias VARCHAR(100) UNIQUE NOT NULL,
+    alias VARCHAR(100) NOT NULL,
     category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     unit VARCHAR(32) NOT NULL DEFAULT 'unit',
+  -- Tags: optional array of text labels for filtering/sorting (MVP)
+  tags TEXT[] NOT NULL DEFAULT '{}',
     date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
@@ -35,11 +37,13 @@ CREATE INDEX idx_fridge_items_user_id ON fridge_items(user_id);
 -- Grocery Items table
 CREATE TABLE grocery_items (
     id SERIAL PRIMARY KEY,
-    alias VARCHAR(100) UNIQUE NOT NULL,
+    alias VARCHAR(100) NOT NULL,
     category VARCHAR(100) NOT NULL REFERENCES ingredients(name) ON DELETE RESTRICT,
     quantity INTEGER NOT NULL,
     unit VARCHAR(32) NOT NULL DEFAULT 'unit',
     checked BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Tags: optional array of text labels for filtering/sorting (MVP)
+  tags TEXT[] NOT NULL DEFAULT '{}',
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_grocery_items_user_id ON grocery_items(user_id);
